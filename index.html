@@ -3,22 +3,26 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>NewAge Technologies | IT Support & Managed Services</title>
-  <meta name="description" content="NewAge Technologies provides IT support, managed services, networking, cybersecurity basics, and cloud support for small businesses." />
+  <title>NewAge Technologies | Security, Voice & Data Solutions</title>
+  <meta name="description" content="NewAge Technologies provides security, voice & data solutions, managed IT services, networking, servers, and cloud support for small businesses." />
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/x-icon" href="/favicon.ico" />
 
   <style>
     :root{
-      /* Modern “Wix-like” deep blue palette + clean accent */
-      --bg: #070B14;
-      --bg2:#0B1224;
-      --card:#0E1733;
+      /* Dark modern palette + orange accent to match your logo */
+      --bg: #07070A;
+      --bg2:#0B0C12;
+      --card:#0F111B;
       --border: rgba(255,255,255,.10);
-      --text:#EAF0FF;
-      --muted: rgba(234,240,255,.72);
-      --muted2: rgba(234,240,255,.55);
-      --accent:#2EE6A6;      /* teal/green accent */
-      --accent2:#4C8DFF;     /* blue accent */
-      --shadow: 0 22px 60px rgba(0,0,0,.45);
+      --text:#F3F6FF;
+      --muted: rgba(243,246,255,.72);
+      --muted2: rgba(243,246,255,.55);
+
+      --accent:#FF6A1A;      /* logo orange */
+      --accent2:#FFB37A;     /* softer orange tint */
+      --shadow: 0 22px 60px rgba(0,0,0,.55);
       --radius: 18px;
     }
 
@@ -29,39 +33,47 @@
       font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
       color:var(--text);
       background:
-        radial-gradient(900px 600px at 15% 10%, rgba(76,141,255,.25) 0%, rgba(7,11,20,0) 60%),
-        radial-gradient(900px 600px at 85% 20%, rgba(46,230,166,.18) 0%, rgba(7,11,20,0) 55%),
+        radial-gradient(900px 600px at 15% 10%, rgba(255,106,26,.18) 0%, rgba(7,7,10,0) 60%),
+        radial-gradient(900px 600px at 85% 20%, rgba(255,179,122,.10) 0%, rgba(7,7,10,0) 55%),
         linear-gradient(180deg, var(--bg) 0%, var(--bg2) 100%);
     }
 
     a{color:inherit;text-decoration:none}
     .wrap{max-width:1120px;margin:0 auto;padding:26px 18px 46px}
+
+    /* Top bar */
     .topbar{
       position:sticky;top:0;z-index:50;
       backdrop-filter: blur(10px);
-      background: rgba(7,11,20,.55);
+      background: rgba(7,7,10,.55);
       border-bottom: 1px solid rgba(255,255,255,.06);
     }
     .topbar .wrap{padding:14px 18px}
     header{display:flex;align-items:center;justify-content:space-between;gap:14px}
-    .brand{display:flex;align-items:center;gap:12px}
-    .logo{
-      width:44px;height:44px;border-radius:14px;
-      background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
-      box-shadow: 0 14px 40px rgba(76,141,255,.20);
-      flex:0 0 auto;
-    }
-    .brand .name{font-weight:800;letter-spacing:.2px;line-height:1.05}
-    .brand .tag{font-size:12.5px;color:var(--muted2);margin-top:2px}
 
-    nav{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+    .brand{display:flex;align-items:center;gap:12px;min-width:0}
+    .brand img{display:block;max-width:100%}
+    .brandText{display:flex;flex-direction:column;min-width:0}
+    .brandText .tag{
+      font-size:12.5px;
+      color:var(--muted2);
+      margin-top:2px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width:44ch;
+    }
+
+    nav{display:flex;align-items:center;gap:16px;flex-wrap:wrap;justify-content:flex-end}
     nav a{font-size:14px;color:var(--muted);opacity:.95}
     nav a:hover{opacity:1;color:var(--text)}
+
     .btn{
       display:inline-flex;align-items:center;justify-content:center;
       padding:10px 14px;border-radius:14px;font-weight:750;
       background: linear-gradient(135deg, var(--accent), var(--accent2));
-      color:#07101F;
+      color:#12131a;
+      border: 1px solid rgba(255,255,255,.06);
     }
     .btn.secondary{
       background: transparent;
@@ -79,7 +91,7 @@
       align-items:stretch;
     }
     .card{
-      background: rgba(14,23,51,.72);
+      background: rgba(15,17,27,.78);
       border:1px solid var(--border);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
@@ -91,7 +103,7 @@
     }
     .pill{
       font-size:12.5px;
-      color: rgba(234,240,255,.78);
+      color: rgba(243,246,255,.78);
       border:1px solid rgba(255,255,255,.14);
       padding:7px 10px;border-radius:999px;
       background: rgba(255,255,255,.03);
@@ -120,12 +132,14 @@
       border:1px solid rgba(255,255,255,.10);
       background: rgba(255,255,255,.03);
     }
-    .stat .num{font-weight:900;font-size:18px}
-    .stat .lbl{color:var(--muted2);font-size:12.5px;margin-top:4px}
+    .stat .num{font-weight:900;font-size:14px;letter-spacing:.2px}
+    .stat .lbl{color:var(--muted2);font-size:12.5px;margin-top:6px;line-height:1.35}
 
-    /* SERVICES */
+    /* SECTIONS */
     section{margin-top:22px}
-    .sectionTitle{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin:0 0 10px}
+    .sectionTitle{
+      display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin:0 0 10px
+    }
     .sectionTitle h2{margin:0;font-size:20px;letter-spacing:-.2px}
     .sectionTitle p{margin:0;color:var(--muted2);font-size:13.5px}
 
@@ -135,19 +149,22 @@
     .icon{
       width:42px;height:42px;border-radius:14px;
       display:grid;place-items:center;
-      background: rgba(76,141,255,.12);
-      border:1px solid rgba(76,141,255,.22);
+      background: rgba(255,106,26,.12);
+      border:1px solid rgba(255,106,26,.22);
     }
     .icon.alt{
-      background: rgba(46,230,166,.10);
-      border:1px solid rgba(46,230,166,.20);
+      background: rgba(255,179,122,.10);
+      border:1px solid rgba(255,179,122,.20);
     }
 
-    /* ABOUT + CTA */
     .grid2{display:grid;grid-template-columns: 1fr 1fr;gap:12px}
     .list{margin:0;padding:0;list-style:none;display:grid;gap:10px}
     .li{display:flex;gap:10px}
-    .dot{width:10px;height:10px;border-radius:50%;background:var(--accent);margin-top:7px;flex:0 0 auto}
+    .dot{
+      width:10px;height:10px;border-radius:50%;
+      background:var(--accent);
+      margin-top:7px;flex:0 0 auto
+    }
     .li b{display:block}
     .li span{display:block;color:var(--muted);font-size:14px;line-height:1.55;margin-top:2px}
 
@@ -166,12 +183,12 @@
       font-size:14px;
     }
     textarea{min-height:110px;resize:vertical}
-    input::placeholder, textarea::placeholder{color: rgba(234,240,255,.38)}
+    input::placeholder, textarea::placeholder{color: rgba(243,246,255,.38)}
     .note{color:var(--muted2);font-size:12.5px;line-height:1.5;margin-top:10px}
 
     footer{
       margin-top:22px;
-      color: rgba(234,240,255,.55);
+      color: rgba(243,246,255,.55);
       font-size:13px;
       display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;
       padding-top:18px;border-top:1px solid rgba(255,255,255,.08);
@@ -185,24 +202,32 @@
       .grid2{grid-template-columns:1fr}
       .contactGrid{grid-template-columns:1fr}
       h1{font-size:38px}
+      nav{gap:12px}
+      .brandText .tag{max-width:30ch}
     }
   </style>
 </head>
 
 <body>
+  <!-- Sticky Nav -->
   <div class="topbar">
     <div class="wrap">
       <header>
         <div class="brand">
-          <div class="logo" aria-hidden="true"></div>
-          <div>
-            <div class="name">NewAge Technologies</div>
-            <div class="tag">IT Support • Managed Services • Networking</div>
+          <!-- Header Logo -->
+          <img
+            src="/newage_logo_header_64h.png"
+            alt="NewAge Technologies"
+            style="height:44px;width:auto"
+          />
+          <div class="brandText">
+            <div class="tag">Security • Voice • Data • IT Support</div>
           </div>
         </div>
 
         <nav>
           <a href="#services">Services</a>
+          <a href="#solutions">Solutions</a>
           <a href="#about">About</a>
           <a href="#contact">Contact</a>
           <a class="btn secondary" href="#support">Support</a>
@@ -217,38 +242,57 @@
     <section class="hero">
       <div class="heroGrid">
         <div class="card">
+          <!-- Hero Logo -->
+          <img
+            src="/newage_logo_hero_160h.png"
+            alt="NewAge Technologies"
+            style="height:120px;width:auto;max-width:100%;margin-bottom:14px;"
+          />
+
           <div class="kicker">
             <span class="pill">Fast Response</span>
-            <span class="pill">Small Business IT</span>
-            <span class="pill">Local + Remote Support</span>
+            <span class="pill">Small Business + SMB</span>
+            <span class="pill">On-site + Remote</span>
           </div>
 
-          <h1>Modern IT support that keeps your business online.</h1>
+          <h1>Security, Voice & Data Solutions — modern IT done right.</h1>
           <p class="sub">
-            NewAge Technologies helps small businesses with managed IT, networks, servers, and cloud support.
-            Clear communication, practical fixes, and reliable systems—without the enterprise price tag.
+            NewAge Technologies helps businesses stay secure and connected with dependable networking,
+            voice/data cabling, surveillance, and managed IT support. Clear communication, practical fixes,
+            and systems that scale.
           </p>
 
           <div class="ctaRow">
             <a class="btn" href="#contact">Get a Quote</a>
-            <a class="btn secondary" href="#services">View Services</a>
+            <a class="btn secondary" href="#services">Explore Services</a>
           </div>
 
           <div class="statGrid">
-            <div class="stat"><div class="num">Help Desk</div><div class="lbl">Remote troubleshooting & on-site support</div></div>
-            <div class="stat"><div class="num">Networks</div><div class="lbl">Wi-Fi, switches, VLANs, VPN & firewalls</div></div>
-            <div class="stat"><div class="num">Servers/Cloud</div><div class="lbl">Windows Server, backups, Microsoft 365</div></div>
+            <div class="stat">
+              <div class="num">Security</div>
+              <div class="lbl">Cameras, access control, and secure network fundamentals.</div>
+            </div>
+            <div class="stat">
+              <div class="num">Voice & Data</div>
+              <div class="lbl">Structured cabling, racks, patching, labeling, and cleanup.</div>
+            </div>
+            <div class="stat">
+              <div class="num">Managed IT</div>
+              <div class="lbl">Help desk, Microsoft 365, backups, patching, monitoring.</div>
+            </div>
           </div>
         </div>
 
-        <div class="card">
+        <!-- Quick Support / Ticketing callout -->
+        <div class="card" id="support">
           <div class="sectionTitle" style="margin-bottom:8px">
-            <h2>Quick Support</h2>
-            <p>Ticketing portal coming next</p>
+            <h2>Support</h2>
+            <p>Ticket portal coming next</p>
           </div>
 
           <p class="sub" style="margin-bottom:12px">
-            For now, email support and we’ll respond quickly. Next step: a full ticketing database + client portal.
+            For now, email support and we’ll respond quickly. Next, we’ll add a secure ticketing system with
+            login, ticket status, and attachments.
           </p>
 
           <div class="grid2">
@@ -262,8 +306,9 @@
             </div>
           </div>
 
-          <div id="support" class="note">
-            Want tickets + tracking? We’ll add a secure portal with login, ticket status, and attachments using a low-cost database.
+          <div class="note">
+            Want ticket tracking for clients? We’ll wire up a low-cost database and a simple portal under
+            <b>/support</b>.
           </div>
         </div>
       </div>
@@ -273,7 +318,7 @@
     <section id="services">
       <div class="sectionTitle">
         <h2>Services</h2>
-        <p>Everything you need to run smoothly</p>
+        <p>Core services built for reliability</p>
       </div>
 
       <div class="grid3">
@@ -286,13 +331,41 @@
         <div class="card svc">
           <div class="icon alt">📡</div>
           <h3>Networking & Wi-Fi</h3>
-          <p>Business Wi-Fi, access points, switches, VLANs, site-to-site & end-user VPN, and firewall configuration.</p>
+          <p>Firewalls, switches, access points, VLANs, site-to-site and end-user VPN for secure connectivity.</p>
         </div>
 
         <div class="card svc">
           <div class="icon">☁️</div>
-          <h3>Servers & Cloud Support</h3>
-          <p>Windows Server administration, virtualization, backups, Microsoft 365, and cloud migrations.</p>
+          <h3>Servers & Cloud</h3>
+          <p>Windows Server, virtualization, backups, Microsoft 365, and cloud support/migrations.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SOLUTIONS -->
+    <section id="solutions">
+      <div class="sectionTitle">
+        <h2>Security • Voice • Data</h2>
+        <p>Project installs & upgrades</p>
+      </div>
+
+      <div class="grid3">
+        <div class="card svc">
+          <div class="icon alt">🎥</div>
+          <h3>Security Cameras</h3>
+          <p>Camera installs, NVR setup, remote viewing, and clean network integration for reliability.</p>
+        </div>
+
+        <div class="card svc">
+          <div class="icon">🧩</div>
+          <h3>Structured Cabling</h3>
+          <p>Cat5/Cat6 runs, patch panels, racks, labeling, and tidy closets that are easy to maintain.</p>
+        </div>
+
+        <div class="card svc">
+          <div class="icon alt">📞</div>
+          <h3>Voice Systems</h3>
+          <p>VoIP/phone deployments, network readiness, and troubleshooting for crystal-clear calling.</p>
         </div>
       </div>
     </section>
@@ -309,17 +382,17 @@
           <h3 style="margin:0 0 8px">What you get</h3>
           <ul class="list">
             <li class="li"><span class="dot"></span><div><b>Clear communication</b><span>No jargon—just the plan, the fix, and what to expect.</span></div></li>
-            <li class="li"><span class="dot"></span><div><b>Proactive maintenance</b><span>Patching, backups, monitoring, and basic security hygiene.</span></div></li>
-            <li class="li"><span class="dot"></span><div><b>Scalable setup</b><span>We build systems that grow with your business.</span></div></li>
+            <li class="li"><span class="dot"></span><div><b>Proactive maintenance</b><span>Patching, backups, monitoring, and baseline security.</span></div></li>
+            <li class="li"><span class="dot"></span><div><b>Quality installs</b><span>Clean cabling, labeled closets, and stable networks.</span></div></li>
           </ul>
         </div>
 
         <div class="card">
           <h3 style="margin:0 0 8px">Common projects</h3>
           <ul class="list">
-            <li class="li"><span class="dot"></span><div><b>Wi-Fi & network refresh</b><span>Upgrade APs, improve coverage, VLAN segmentation, and firewall rules.</span></div></li>
-            <li class="li"><span class="dot"></span><div><b>Microsoft 365 setup</b><span>Email, identity, MFA, and device onboarding.</span></div></li>
-            <li class="li"><span class="dot"></span><div><b>Backup & recovery</b><span>Reliable backups with routine testing and simple recovery steps.</span></div></li>
+            <li class="li"><span class="dot"></span><div><b>Network refresh</b><span>Upgrade Wi-Fi, switching, segmentation (VLANs), and firewall rules.</span></div></li>
+            <li class="li"><span class="dot"></span><div><b>Microsoft 365 setup</b><span>Email migration, MFA, device onboarding, and access policies.</span></div></li>
+            <li class="li"><span class="dot"></span><div><b>Backup & recovery</b><span>Reliable backups with routine testing and recovery readiness.</span></div></li>
           </ul>
         </div>
       </div>
@@ -335,7 +408,9 @@
       <div class="contactGrid">
         <div class="card">
           <h3 style="margin:0 0 6px">Send a message</h3>
-          <p class="sub" style="margin:0 0 8px">This form is a placeholder. Next step we’ll wire it to tickets + database.</p>
+          <p class="sub" style="margin:0 0 8px">
+            This form is a placeholder. We’ll connect it to the ticketing database next.
+          </p>
 
           <div class="field">
             <label>Name</label>
@@ -355,7 +430,9 @@
             <a class="btn secondary" href="#support">Ticketing (next)</a>
           </div>
 
-          <div class="note">Tip: Update the phone number, service areas, and any certifications once you’re ready.</div>
+          <div class="note">
+            Tip: Update phone number, service areas, and certifications when ready.
+          </div>
         </div>
 
         <div class="card">
@@ -380,7 +457,16 @@
           </div>
 
           <div class="note">
-            When we add ticketing, customers will be able to login, open tickets, upload screenshots, and check status.
+            Next step: ticket portal + database so customers can login, open tickets, upload screenshots, and check status.
+          </div>
+
+          <!-- Optional: small transparent logo in the sidebar -->
+          <div style="margin-top:14px;opacity:.95">
+            <img
+              src="/newage_technologies_logo_transparent.png"
+              alt="NewAge Technologies"
+              style="height:70px;width:auto;max-width:100%"
+            />
           </div>
         </div>
       </div>
