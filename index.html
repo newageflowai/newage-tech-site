@@ -4,131 +4,393 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>NewAge Technologies | IT Support & Managed Services</title>
-  <meta name="description" content="NewAge Technologies provides managed IT services, networking, cloud support, cybersecurity, and help desk for small businesses." />
+  <meta name="description" content="NewAge Technologies provides IT support, managed services, networking, cybersecurity basics, and cloud support for small businesses." />
+
   <style>
-    :root { --bg:#0b1220; --card:#121b2f; --muted:#8ea0c5; --text:#e9eefc; --accent:#5eead4; --accent2:#60a5fa; }
-    *{box-sizing:border-box} body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:radial-gradient(1200px 700px at 20% 10%, #1a2a4a 0%, var(--bg) 55%), var(--bg);color:var(--text);}
+    :root{
+      /* Modern “Wix-like” deep blue palette + clean accent */
+      --bg: #070B14;
+      --bg2:#0B1224;
+      --card:#0E1733;
+      --border: rgba(255,255,255,.10);
+      --text:#EAF0FF;
+      --muted: rgba(234,240,255,.72);
+      --muted2: rgba(234,240,255,.55);
+      --accent:#2EE6A6;      /* teal/green accent */
+      --accent2:#4C8DFF;     /* blue accent */
+      --shadow: 0 22px 60px rgba(0,0,0,.45);
+      --radius: 18px;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(900px 600px at 15% 10%, rgba(76,141,255,.25) 0%, rgba(7,11,20,0) 60%),
+        radial-gradient(900px 600px at 85% 20%, rgba(46,230,166,.18) 0%, rgba(7,11,20,0) 55%),
+        linear-gradient(180deg, var(--bg) 0%, var(--bg2) 100%);
+    }
+
     a{color:inherit;text-decoration:none}
-    .wrap{max-width:1100px;margin:0 auto;padding:28px 18px}
-    header{display:flex;align-items:center;justify-content:space-between;gap:12px}
-    .logo{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.2px}
-    .mark{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 10px 30px rgba(96,165,250,.25)}
-    nav{display:flex;gap:16px;flex-wrap:wrap}
-    nav a{opacity:.9} nav a:hover{opacity:1}
-    .btn{display:inline-flex;align-items:center;justify-content:center;padding:10px 14px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#08101f;font-weight:700}
-    .btn.secondary{background:transparent;border:1px solid rgba(255,255,255,.18);color:var(--text);font-weight:600}
-    .hero{display:grid;grid-template-columns:1.2fr .8fr;gap:22px;align-items:center;margin-top:26px}
-    .card{background:rgba(18,27,47,.78);border:1px solid rgba(255,255,255,.10);border-radius:18px;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,.35);backdrop-filter: blur(6px)}
-    h1{font-size:44px;line-height:1.05;margin:8px 0 10px}
-    .sub{color:var(--muted);font-size:16px;line-height:1.6;margin:0 0 16px}
-    .pillrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
-    .pill{border:1px solid rgba(255,255,255,.14);color:#cfe0ff;padding:7px 10px;border-radius:999px;font-size:13px;opacity:.95}
-    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:18px}
+    .wrap{max-width:1120px;margin:0 auto;padding:26px 18px 46px}
+    .topbar{
+      position:sticky;top:0;z-index:50;
+      backdrop-filter: blur(10px);
+      background: rgba(7,11,20,.55);
+      border-bottom: 1px solid rgba(255,255,255,.06);
+    }
+    .topbar .wrap{padding:14px 18px}
+    header{display:flex;align-items:center;justify-content:space-between;gap:14px}
+    .brand{display:flex;align-items:center;gap:12px}
+    .logo{
+      width:44px;height:44px;border-radius:14px;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+      box-shadow: 0 14px 40px rgba(76,141,255,.20);
+      flex:0 0 auto;
+    }
+    .brand .name{font-weight:800;letter-spacing:.2px;line-height:1.05}
+    .brand .tag{font-size:12.5px;color:var(--muted2);margin-top:2px}
+
+    nav{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+    nav a{font-size:14px;color:var(--muted);opacity:.95}
+    nav a:hover{opacity:1;color:var(--text)}
+    .btn{
+      display:inline-flex;align-items:center;justify-content:center;
+      padding:10px 14px;border-radius:14px;font-weight:750;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color:#07101F;
+    }
+    .btn.secondary{
+      background: transparent;
+      border:1px solid rgba(255,255,255,.16);
+      color:var(--text);
+      font-weight:650;
+    }
+
+    /* HERO */
+    .hero{padding:34px 0 10px}
+    .heroGrid{
+      display:grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap:18px;
+      align-items:stretch;
+    }
+    .card{
+      background: rgba(14,23,51,.72);
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding:20px;
+    }
+    .kicker{
+      display:inline-flex;gap:10px;flex-wrap:wrap;
+      margin-bottom:12px;
+    }
+    .pill{
+      font-size:12.5px;
+      color: rgba(234,240,255,.78);
+      border:1px solid rgba(255,255,255,.14);
+      padding:7px 10px;border-radius:999px;
+      background: rgba(255,255,255,.03);
+    }
+    h1{
+      margin:0 0 12px;
+      font-size:46px;
+      line-height:1.02;
+      letter-spacing:-.6px;
+    }
+    .sub{
+      margin:0 0 18px;
+      color:var(--muted);
+      font-size:16px;
+      line-height:1.7;
+      max-width:62ch;
+    }
+    .ctaRow{display:flex;gap:10px;flex-wrap:wrap}
+
+    .statGrid{
+      display:grid;grid-template-columns: repeat(3,1fr);
+      gap:12px;margin-top:18px;
+    }
+    .stat{
+      padding:14px;border-radius:16px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03);
+    }
+    .stat .num{font-weight:900;font-size:18px}
+    .stat .lbl{color:var(--muted2);font-size:12.5px;margin-top:4px}
+
+    /* SERVICES */
+    section{margin-top:22px}
+    .sectionTitle{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin:0 0 10px}
+    .sectionTitle h2{margin:0;font-size:20px;letter-spacing:-.2px}
+    .sectionTitle p{margin:0;color:var(--muted2);font-size:13.5px}
+
+    .grid3{display:grid;grid-template-columns: repeat(3,1fr);gap:12px}
     .svc h3{margin:10px 0 6px;font-size:16px}
-    .svc p{margin:0;color:var(--muted);font-size:14px;line-height:1.55}
-    .ctaRow{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
-    .side h2{margin:0 0 10px;font-size:18px}
+    .svc p{margin:0;color:var(--muted);font-size:14px;line-height:1.6}
+    .icon{
+      width:42px;height:42px;border-radius:14px;
+      display:grid;place-items:center;
+      background: rgba(76,141,255,.12);
+      border:1px solid rgba(76,141,255,.22);
+    }
+    .icon.alt{
+      background: rgba(46,230,166,.10);
+      border:1px solid rgba(46,230,166,.20);
+    }
+
+    /* ABOUT + CTA */
+    .grid2{display:grid;grid-template-columns: 1fr 1fr;gap:12px}
     .list{margin:0;padding:0;list-style:none;display:grid;gap:10px}
-    .list li{display:flex;gap:10px;align-items:flex-start}
-    .dot{width:10px;height:10px;border-radius:50%;margin-top:6px;background:var(--accent)}
-    footer{margin:22px 0 8px;color:rgba(233,238,252,.65);font-size:13px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
-    .small{color:rgba(233,238,252,.65)}
-    @media (max-width:900px){.hero{grid-template-columns:1fr}.grid{grid-template-columns:1fr}}
+    .li{display:flex;gap:10px}
+    .dot{width:10px;height:10px;border-radius:50%;background:var(--accent);margin-top:7px;flex:0 0 auto}
+    .li b{display:block}
+    .li span{display:block;color:var(--muted);font-size:14px;line-height:1.55;margin-top:2px}
+
+    /* CONTACT */
+    .contactGrid{display:grid;grid-template-columns: 1.1fr .9fr;gap:12px}
+    .field{display:grid;gap:6px;margin-top:10px}
+    .field label{font-size:13px;color:var(--muted2)}
+    input,textarea{
+      width:100%;
+      padding:12px 12px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.03);
+      color:var(--text);
+      outline:none;
+      font-size:14px;
+    }
+    textarea{min-height:110px;resize:vertical}
+    input::placeholder, textarea::placeholder{color: rgba(234,240,255,.38)}
+    .note{color:var(--muted2);font-size:12.5px;line-height:1.5;margin-top:10px}
+
+    footer{
+      margin-top:22px;
+      color: rgba(234,240,255,.55);
+      font-size:13px;
+      display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;
+      padding-top:18px;border-top:1px solid rgba(255,255,255,.08);
+    }
+
+    /* Responsive */
+    @media (max-width: 960px){
+      .heroGrid{grid-template-columns:1fr}
+      .statGrid{grid-template-columns:1fr}
+      .grid3{grid-template-columns:1fr}
+      .grid2{grid-template-columns:1fr}
+      .contactGrid{grid-template-columns:1fr}
+      h1{font-size:38px}
+    }
   </style>
 </head>
 
 <body>
-  <div class="wrap">
-    <header>
-      <div class="logo">
-        <div class="mark" aria-hidden="true"></div>
-        <div>
-          <div>NewAge Technologies</div>
-          <div class="small">IT Support • Managed Services</div>
-        </div>
-      </div>
-      <nav>
-        <a href="#services">Services</a>
-        <a href="#about">About</a>
-        <a href="#contact">Contact</a>
-        <a class="btn secondary" href="#support">Support</a>
-      </nav>
-    </header>
-
-    <section class="hero">
-      <div class="card">
-        <div class="pillrow">
-          <span class="pill">Fast Response</span>
-          <span class="pill">Small Business IT</span>
-          <span class="pill">Networking • Cloud • Security</span>
+  <div class="topbar">
+    <div class="wrap">
+      <header>
+        <div class="brand">
+          <div class="logo" aria-hidden="true"></div>
+          <div>
+            <div class="name">NewAge Technologies</div>
+            <div class="tag">IT Support • Managed Services • Networking</div>
+          </div>
         </div>
 
-        <h1>Reliable IT support that keeps your business running.</h1>
-        <p class="sub">
-          We help small businesses with managed IT services, network setup, cloud support,
-          cybersecurity basics, and troubleshooting—so you can focus on work, not tech.
-        </p>
-
-        <div class="ctaRow">
+        <nav>
+          <a href="#services">Services</a>
+          <a href="#about">About</a>
+          <a href="#contact">Contact</a>
+          <a class="btn secondary" href="#support">Support</a>
           <a class="btn" href="#contact">Request Service</a>
-          <a class="btn secondary" href="#support">Open a Support Ticket (coming soon)</a>
+        </nav>
+      </header>
+    </div>
+  </div>
+
+  <main class="wrap">
+    <!-- HERO -->
+    <section class="hero">
+      <div class="heroGrid">
+        <div class="card">
+          <div class="kicker">
+            <span class="pill">Fast Response</span>
+            <span class="pill">Small Business IT</span>
+            <span class="pill">Local + Remote Support</span>
+          </div>
+
+          <h1>Modern IT support that keeps your business online.</h1>
+          <p class="sub">
+            NewAge Technologies helps small businesses with managed IT, networks, servers, and cloud support.
+            Clear communication, practical fixes, and reliable systems—without the enterprise price tag.
+          </p>
+
+          <div class="ctaRow">
+            <a class="btn" href="#contact">Get a Quote</a>
+            <a class="btn secondary" href="#services">View Services</a>
+          </div>
+
+          <div class="statGrid">
+            <div class="stat"><div class="num">Help Desk</div><div class="lbl">Remote troubleshooting & on-site support</div></div>
+            <div class="stat"><div class="num">Networks</div><div class="lbl">Wi-Fi, switches, VLANs, VPN & firewalls</div></div>
+            <div class="stat"><div class="num">Servers/Cloud</div><div class="lbl">Windows Server, backups, Microsoft 365</div></div>
+          </div>
         </div>
 
-        <div id="services" class="grid">
-          <div class="svc">
-            <h3>Managed IT & Help Desk</h3>
-            <p>Day-to-day support, onboarding/offboarding, device management, and user troubleshooting.</p>
+        <div class="card">
+          <div class="sectionTitle" style="margin-bottom:8px">
+            <h2>Quick Support</h2>
+            <p>Ticketing portal coming next</p>
           </div>
-          <div class="svc">
-            <h3>Networks & Wi-Fi</h3>
-            <p>Firewalls, switches, access points, VLANs, VPN, and reliable business Wi-Fi.</p>
+
+          <p class="sub" style="margin-bottom:12px">
+            For now, email support and we’ll respond quickly. Next step: a full ticketing database + client portal.
+          </p>
+
+          <div class="grid2">
+            <div class="stat">
+              <div class="num">Email</div>
+              <div class="lbl"><a href="mailto:support@newage-tech.com">support@newage-tech.com</a></div>
+            </div>
+            <div class="stat">
+              <div class="num">Hours</div>
+              <div class="lbl">Mon–Fri • 9am–5pm</div>
+            </div>
           </div>
-          <div class="svc">
-            <h3>Servers & Cloud</h3>
-            <p>Windows Server, virtualization, backups, Microsoft 365, and cloud migrations.</p>
+
+          <div id="support" class="note">
+            Want tickets + tracking? We’ll add a secure portal with login, ticket status, and attachments using a low-cost database.
           </div>
         </div>
       </div>
+    </section>
 
-      <aside class="card side">
-        <h2>What we do best</h2>
-        <ul class="list">
-          <li><span class="dot"></span><div><strong>Fix issues fast</strong><br><span class="small">Clear communication and practical solutions.</span></div></li>
-          <li><span class="dot"></span><div><strong>Secure your environment</strong><br><span class="small">Baseline security, patching, MFA, backups.</span></div></li>
-          <li><span class="dot"></span><div><strong>Build stable systems</strong><br><span class="small">Networks, servers, Wi-Fi, and monitoring.</span></div></li>
-        </ul>
+    <!-- SERVICES -->
+    <section id="services">
+      <div class="sectionTitle">
+        <h2>Services</h2>
+        <p>Everything you need to run smoothly</p>
+      </div>
 
-        <div id="about" style="margin-top:16px">
-          <h2>About</h2>
-          <p class="small" style="line-height:1.6;margin:0">
-            NewAge Technologies provides IT services for small businesses—support, infrastructure,
-            and improvements that reduce downtime and headaches.
-          </p>
+      <div class="grid3">
+        <div class="card svc">
+          <div class="icon">🛠️</div>
+          <h3>Managed IT & Help Desk</h3>
+          <p>End-user support, onboarding/offboarding, device setup, troubleshooting, and ongoing maintenance.</p>
         </div>
 
-        <div id="contact" style="margin-top:16px">
-          <h2>Contact</h2>
-          <p class="small" style="margin:0;line-height:1.6">
-            Email: <a href="mailto:support@newage-tech.com">support@newage-tech.com</a><br/>
-            Phone: <span class="small">(add your number)</span><br/>
-            Location: <span class="small">Charlotte, NC</span>
-          </p>
+        <div class="card svc">
+          <div class="icon alt">📡</div>
+          <h3>Networking & Wi-Fi</h3>
+          <p>Business Wi-Fi, access points, switches, VLANs, site-to-site & end-user VPN, and firewall configuration.</p>
         </div>
 
-        <div id="support" style="margin-top:16px">
-          <h2>Support</h2>
-          <p class="small" style="margin:0;line-height:1.6">
-            Ticket portal is coming next. For now, email us and we’ll respond quickly.
-          </p>
+        <div class="card svc">
+          <div class="icon">☁️</div>
+          <h3>Servers & Cloud Support</h3>
+          <p>Windows Server administration, virtualization, backups, Microsoft 365, and cloud migrations.</p>
         </div>
-      </aside>
+      </div>
+    </section>
+
+    <!-- ABOUT -->
+    <section id="about">
+      <div class="sectionTitle">
+        <h2>Why NewAge</h2>
+        <p>Practical, secure, and responsive</p>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <h3 style="margin:0 0 8px">What you get</h3>
+          <ul class="list">
+            <li class="li"><span class="dot"></span><div><b>Clear communication</b><span>No jargon—just the plan, the fix, and what to expect.</span></div></li>
+            <li class="li"><span class="dot"></span><div><b>Proactive maintenance</b><span>Patching, backups, monitoring, and basic security hygiene.</span></div></li>
+            <li class="li"><span class="dot"></span><div><b>Scalable setup</b><span>We build systems that grow with your business.</span></div></li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h3 style="margin:0 0 8px">Common projects</h3>
+          <ul class="list">
+            <li class="li"><span class="dot"></span><div><b>Wi-Fi & network refresh</b><span>Upgrade APs, improve coverage, VLAN segmentation, and firewall rules.</span></div></li>
+            <li class="li"><span class="dot"></span><div><b>Microsoft 365 setup</b><span>Email, identity, MFA, and device onboarding.</span></div></li>
+            <li class="li"><span class="dot"></span><div><b>Backup & recovery</b><span>Reliable backups with routine testing and simple recovery steps.</span></div></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONTACT -->
+    <section id="contact">
+      <div class="sectionTitle">
+        <h2>Contact</h2>
+        <p>Request service or ask a question</p>
+      </div>
+
+      <div class="contactGrid">
+        <div class="card">
+          <h3 style="margin:0 0 6px">Send a message</h3>
+          <p class="sub" style="margin:0 0 8px">This form is a placeholder. Next step we’ll wire it to tickets + database.</p>
+
+          <div class="field">
+            <label>Name</label>
+            <input placeholder="Your name" />
+          </div>
+          <div class="field">
+            <label>Email</label>
+            <input placeholder="you@company.com" />
+          </div>
+          <div class="field">
+            <label>Message</label>
+            <textarea placeholder="Tell us what you need help with..."></textarea>
+          </div>
+
+          <div class="ctaRow" style="margin-top:12px">
+            <a class="btn" href="mailto:support@newage-tech.com?subject=Service%20Request%20-%20NewAge%20Tech">Email Support</a>
+            <a class="btn secondary" href="#support">Ticketing (next)</a>
+          </div>
+
+          <div class="note">Tip: Update the phone number, service areas, and any certifications once you’re ready.</div>
+        </div>
+
+        <div class="card">
+          <h3 style="margin:0 0 8px">Contact details</h3>
+          <div class="grid2">
+            <div class="stat">
+              <div class="num">Email</div>
+              <div class="lbl"><a href="mailto:support@newage-tech.com">support@newage-tech.com</a></div>
+            </div>
+            <div class="stat">
+              <div class="num">Location</div>
+              <div class="lbl">Charlotte, NC</div>
+            </div>
+            <div class="stat">
+              <div class="num">Phone</div>
+              <div class="lbl">(add your number)</div>
+            </div>
+            <div class="stat">
+              <div class="num">Service</div>
+              <div class="lbl">Remote + On-site</div>
+            </div>
+          </div>
+
+          <div class="note">
+            When we add ticketing, customers will be able to login, open tickets, upload screenshots, and check status.
+          </div>
+        </div>
+      </div>
     </section>
 
     <footer>
       <div>© <span id="y"></span> NewAge Technologies. All rights reserved.</div>
-      <div class="small">Powered by Cloudflare Pages</div>
+      <div>Built on Cloudflare Pages</div>
     </footer>
-  </div>
+  </main>
 
   <script>
     document.getElementById("y").textContent = new Date().getFullYear();
