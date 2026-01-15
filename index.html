@@ -82,6 +82,7 @@
       color:var(--text);
       font-weight:650;
     }
+    .btn:disabled{opacity:.65;cursor:not-allowed}
 
     /* HERO */
     .hero{padding:34px 0 10px}
@@ -186,6 +187,30 @@
     textarea{min-height:110px;resize:vertical}
     input::placeholder, textarea::placeholder{color: rgba(243,246,255,.38)}
     .note{color:var(--muted2);font-size:12.5px;line-height:1.5;margin-top:10px}
+
+    /* Form status */
+    .status{
+      margin-top:12px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.03);
+      border-radius:14px;
+      padding:10px 12px;
+      font-size:13px;
+      color: var(--muted);
+      display:none;
+    }
+    .status.ok{
+      display:block;
+      border-color: rgba(46,230,166,.25);
+      background: rgba(46,230,166,.06);
+      color: rgba(243,246,255,.86);
+    }
+    .status.err{
+      display:block;
+      border-color: rgba(255,106,26,.35);
+      background: rgba(255,106,26,.06);
+      color: rgba(243,246,255,.86);
+    }
 
     footer{
       margin-top:22px;
@@ -407,14 +432,19 @@
       </div>
 
       <div class="contactGrid">
-        <!-- Contact Form (mailto) -->
+        <!-- Contact Form (Formspree) -->
         <div class="card">
           <h3 style="margin:0 0 6px">Send a message</h3>
           <p class="sub" style="margin:0 0 8px">
-            This form opens your email app with the message filled in. If it doesn't open, use the “Email Support” button.
+            This form sends directly to our support inbox.
           </p>
 
-          <form id="contactForm">
+          <!-- IMPORTANT:
+               Replace YOUR_FORM_ID below with your real Formspree ID.
+               Example: https://formspree.io/f/abcdwxyz
+          -->
+          <form id="contactForm" action="https://formspree.io/f/YOUR_FORM_ID" method="POST">
+            <!-- Formspree uses these field names to build the email -->
             <div class="field">
               <label for="name">Name</label>
               <input id="name" name="name" placeholder="Your name" required />
@@ -435,14 +465,20 @@
               <textarea id="message" name="message" placeholder="Tell us what you need help with..." required></textarea>
             </div>
 
+            <!-- Helpful metadata -->
+            <input type="hidden" name="_subject" value="New Contact Form Submission - NewAge Tech" />
+            <input type="hidden" name="_format" value="plain" />
+
             <div class="ctaRow" style="margin-top:12px">
-              <button class="btn" type="submit">Send Email</button>
+              <button id="sendBtn" class="btn" type="submit">Send Message</button>
               <a class="btn secondary" href="mailto:support@newage-tech.com">Email Support</a>
             </div>
 
+            <div id="formStatus" class="status" role="status" aria-live="polite"></div>
+
             <div class="note">
-              Note: This uses your device’s email program. For a true “submit” that works for everyone, we can connect this
-              to a free form service (Formspree) or a Cloudflare Worker later.
+              If you haven’t yet: create your Formspree form, set the destination to <b>support@newage-tech.com</b>,
+              then paste your Formspree endpoint into the <code>action</code> attribute above.
             </div>
           </form>
         </div>
@@ -495,30 +531,56 @@
     // Footer year
     document.getElementById("y").textContent = new Date().getFullYear();
 
-    // Contact form -> opens email client with prefilled message
+    // Formspree AJAX submit (stays on page, shows success/error message)
     const form = document.getElementById("contactForm");
+    const statusEl = document.getElementById("formStatus");
+    const sendBtn = document.getElementById("sendBtn");
+
+    function setStatus(type, msg){
+      statusEl.className = "status " + type; // ok | err
+      statusEl.textContent = msg;
+    }
+
     if (form) {
-      form.addEventListener("submit", function (e) {
+      form.addEventListener("submit", async function (e) {
         e.preventDefault();
 
-        const name = document.getElementById("name").value.trim();
-        const email = document.getElementById("email").value.trim();
-        const subject = document.getElementById("subject").value.trim();
-        const message = document.getElementById("message").value.trim();
+        // Basic safety: ensure action is updated
+        const action = form.getAttribute("action") || "";
+        if (action.includes("YOUR_FORM_ID")) {
+          setStatus("err", "Form isn’t configured yet. Replace YOUR_FORM_ID in the form action with your Formspree form ID.");
+          return;
+        }
 
-        const to = "support@newage-tech.com";
-        const body =
-          `Name: ${name}\n` +
-          `Email: ${email}\n\n` +
-          `Message:\n${message}\n\n` +
-          `— Sent from newage-tech.com contact form`;
+        sendBtn.disabled = true;
+        setStatus("ok", "Sending…");
 
-        const mailto =
-          `mailto:${encodeURIComponent(to)}` +
-          `?subject=${encodeURIComponent(subject)}` +
-          `&body=${encodeURIComponent(body)}`;
+        try {
+          const formData = new FormData(form);
 
-        window.location.href = mailto;
+          const resp = await fetch(action, {
+            method: "POST",
+            body: formData,
+            headers: { "Accept": "application/json" }
+          });
+
+          if (resp.ok) {
+            form.reset();
+            setStatus("ok", "✅ Message sent! We’ll get back to you soon.");
+          } else {
+            // Try to read Formspree error message
+            let data = null;
+            try { data = await resp.json(); } catch {}
+            const msg = data && data.errors && data.errors.length
+              ? data.errors.map(e => e.message).join(" ")
+              : "Sorry — something went wrong sending your message. Please email support@newage-tech.com.";
+            setStatus("err", "❌ " + msg);
+          }
+        } catch (err) {
+          setStatus("err", "❌ Network error. Please email support@newage-tech.com.");
+        } finally {
+          sendBtn.disabled = false;
+        }
       });
     }
   </script>
