@@ -74,6 +74,7 @@
       background: linear-gradient(135deg, var(--accent), var(--accent2));
       color:#12131a;
       border: 1px solid rgba(255,255,255,.06);
+      cursor:pointer;
     }
     .btn.secondary{
       background: transparent;
@@ -406,35 +407,47 @@
       </div>
 
       <div class="contactGrid">
+        <!-- Contact Form (mailto) -->
         <div class="card">
           <h3 style="margin:0 0 6px">Send a message</h3>
           <p class="sub" style="margin:0 0 8px">
-            This form is a placeholder. We’ll connect it to the ticketing database next.
+            This form opens your email app with the message filled in. If it doesn't open, use the “Email Support” button.
           </p>
 
-          <div class="field">
-            <label>Name</label>
-            <input placeholder="Your name" />
-          </div>
-          <div class="field">
-            <label>Email</label>
-            <input placeholder="you@company.com" />
-          </div>
-          <div class="field">
-            <label>Message</label>
-            <textarea placeholder="Tell us what you need help with..."></textarea>
-          </div>
+          <form id="contactForm">
+            <div class="field">
+              <label for="name">Name</label>
+              <input id="name" name="name" placeholder="Your name" required />
+            </div>
 
-          <div class="ctaRow" style="margin-top:12px">
-            <a class="btn" href="mailto:support@newage-tech.com?subject=Service%20Request%20-%20NewAge%20Tech">Email Support</a>
-            <a class="btn secondary" href="#support">Ticketing (next)</a>
-          </div>
+            <div class="field">
+              <label for="email">Email</label>
+              <input id="email" name="email" type="email" placeholder="you@company.com" required />
+            </div>
 
-          <div class="note">
-            Tip: Update phone number, service areas, and certifications when ready.
-          </div>
+            <div class="field">
+              <label for="subject">Subject</label>
+              <input id="subject" name="subject" placeholder="Service Request" required />
+            </div>
+
+            <div class="field">
+              <label for="message">Message</label>
+              <textarea id="message" name="message" placeholder="Tell us what you need help with..." required></textarea>
+            </div>
+
+            <div class="ctaRow" style="margin-top:12px">
+              <button class="btn" type="submit">Send Email</button>
+              <a class="btn secondary" href="mailto:support@newage-tech.com">Email Support</a>
+            </div>
+
+            <div class="note">
+              Note: This uses your device’s email program. For a true “submit” that works for everyone, we can connect this
+              to a free form service (Formspree) or a Cloudflare Worker later.
+            </div>
+          </form>
         </div>
 
+        <!-- Contact Details -->
         <div class="card">
           <h3 style="margin:0 0 8px">Contact details</h3>
           <div class="grid2">
@@ -479,7 +492,35 @@
   </main>
 
   <script>
+    // Footer year
     document.getElementById("y").textContent = new Date().getFullYear();
+
+    // Contact form -> opens email client with prefilled message
+    const form = document.getElementById("contactForm");
+    if (form) {
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        const name = document.getElementById("name").value.trim();
+        const email = document.getElementById("email").value.trim();
+        const subject = document.getElementById("subject").value.trim();
+        const message = document.getElementById("message").value.trim();
+
+        const to = "support@newage-tech.com";
+        const body =
+          `Name: ${name}\n` +
+          `Email: ${email}\n\n` +
+          `Message:\n${message}\n\n` +
+          `— Sent from newage-tech.com contact form`;
+
+        const mailto =
+          `mailto:${encodeURIComponent(to)}` +
+          `?subject=${encodeURIComponent(subject)}` +
+          `&body=${encodeURIComponent(body)}`;
+
+        window.location.href = mailto;
+      });
+    }
   </script>
 </body>
 </html>
