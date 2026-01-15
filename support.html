@@ -3,86 +3,300 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Support | NewAge Technologies</title>
+  <title>Support Portal | NewAge Technologies</title>
   <link rel="icon" type="image/x-icon" href="/favicon.ico" />
   <style>
-    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:#07070A;color:#F3F6FF}
-    .wrap{max-width:860px;margin:0 auto;padding:22px 16px}
-    a{color:#FFB37A;text-decoration:none}
-    .card{background:#0F111B;border:1px solid rgba(255,255,255,.10);border-radius:16px;padding:16px;margin-top:12px}
-    h1{margin:10px 0}
-    label{display:block;margin-top:12px;color:rgba(243,246,255,.7);font-size:13px}
-    input,select,textarea{width:100%;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.03);color:#F3F6FF}
+    :root{
+      --bg:#07070A; --card:#0F111B; --border:rgba(255,255,255,.10);
+      --text:#F3F6FF; --muted:rgba(243,246,255,.70);
+      --accent:#FF6A1A; --accent2:#FFB37A;
+    }
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text)}
+    a{color:var(--accent2);text-decoration:none}
+    .wrap{max-width:980px;margin:0 auto;padding:22px 16px}
+    .top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;margin-top:12px}
+    h1{margin:10px 0 0}
+    h2{margin:0 0 8px}
+    label{display:block;margin-top:12px;color:var(--muted);font-size:13px}
+    input,select,textarea{
+      width:100%;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.03);color:var(--text);outline:none;font-size:14px
+    }
     textarea{min-height:120px;resize:vertical}
-    button{margin-top:14px;padding:11px 14px;border-radius:12px;border:0;background:linear-gradient(135deg,#FF6A1A,#FFB37A);color:#12131a;font-weight:800;cursor:pointer}
-    button:disabled{opacity:.65;cursor:not-allowed}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    @media(max-width:800px){.row{grid-template-columns:1fr}}
+    .btn{
+      margin-top:14px;padding:11px 14px;border-radius:12px;border:0;
+      background:linear-gradient(135deg,var(--accent),var(--accent2));
+      color:#12131a;font-weight:800;cursor:pointer
+    }
+    .btn.secondary{
+      background:transparent;border:1px solid rgba(255,255,255,.16);color:var(--text);font-weight:650
+    }
+    .btn:disabled{opacity:.65;cursor:not-allowed}
+    .actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
     .status{margin-top:12px;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.03);display:none}
     .status.ok{display:block;border-color:rgba(46,230,166,.25);background:rgba(46,230,166,.06)}
     .status.err{display:block;border-color:rgba(255,106,26,.35);background:rgba(255,106,26,.06)}
-    .top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+    table{width:100%;border-collapse:collapse;margin-top:8px}
+    th,td{padding:10px;border-bottom:1px solid rgba(255,255,255,.08);text-align:left;font-size:14px}
+    th{color:rgba(243,246,255,.8);font-size:13px}
+    .pill{display:inline-block;padding:5px 9px;border-radius:999px;border:1px solid rgba(255,255,255,.14);font-size:12px;color:rgba(243,246,255,.85)}
+    .pill.open{border-color:rgba(255,179,122,.35)}
+    .pill.working{border-color:rgba(76,141,255,.35)}
+    .pill.complete{border-color:rgba(46,230,166,.35)}
+    .muted{color:var(--muted);font-size:13px;line-height:1.5}
+    .hide{display:none !important}
   </style>
 </head>
+
 <body>
   <div class="wrap">
     <div class="top">
       <div>
         <img src="/newage_logo_header_64h.png" alt="NewAge Technologies" style="height:42px;width:auto" />
-        <h1>Support Ticket</h1>
+        <h1>Support Portal</h1>
+        <div class="muted">Login to submit tickets and view ticket status.</div>
       </div>
-      <div><a href="/">← Back to site</a></div>
+      <div class="actions">
+        <a class="btn secondary" href="/">← Back to site</a>
+        <button id="logoutBtn" class="btn secondary hide" type="button">Logout</button>
+      </div>
     </div>
 
-    <div class="card">
-      <p>Submit a ticket and our team will respond as soon as possible.</p>
+    <!-- AUTH CARD -->
+    <div id="authCard" class="card">
+      <h2>Login</h2>
+      <div class="row">
+        <div>
+          <label for="authEmail">Email</label>
+          <input id="authEmail" type="email" placeholder="you@company.com" />
+        </div>
+        <div>
+          <label for="authPass">Password</label>
+          <input id="authPass" type="password" placeholder="••••••••" />
+        </div>
+      </div>
+      <div class="actions" style="margin-top:10px">
+        <button id="loginBtn" class="btn" type="button">Login</button>
+        <button id="signupBtn" class="btn secondary" type="button">Create Account</button>
+      </div>
+      <div id="authStatus" class="status" role="status" aria-live="polite"></div>
+      <div class="muted" style="margin-top:10px">
+        Admin? Use <a href="/admin.html">Admin Portal</a>.
+      </div>
+    </div>
 
+    <!-- TICKET SUBMIT -->
+    <div id="submitCard" class="card hide">
+      <h2>Submit a Ticket</h2>
       <form id="ticketForm">
-        <label for="name">Your name</label>
-        <input id="name" required placeholder="Full name" />
-
-        <label for="email">Your email</label>
-        <input id="email" type="email" required placeholder="you@company.com" />
-
-        <label for="priority">Priority</label>
-        <select id="priority">
-          <option value="low">Low</option>
-          <option value="normal" selected>Normal</option>
-          <option value="high">High</option>
-          <option value="urgent">Urgent</option>
-        </select>
-
-        <label for="subject">Subject</label>
-        <input id="subject" required placeholder="Short summary" />
+        <div class="row">
+          <div>
+            <label for="priority">Priority</label>
+            <select id="priority">
+              <option value="low">Low</option>
+              <option value="normal" selected>Normal</option>
+              <option value="high">High</option>
+              <option value="urgent">Urgent</option>
+            </select>
+          </div>
+          <div>
+            <label for="subject">Subject</label>
+            <input id="subject" required placeholder="Short summary" />
+          </div>
+        </div>
 
         <label for="desc">Description</label>
-        <textarea id="desc" required placeholder="What’s happening? Include any error messages and steps you've tried."></textarea>
+        <textarea id="desc" required placeholder="What’s happening? Include errors and what you tried."></textarea>
 
-        <button type="submit" id="submitBtn">Submit Ticket</button>
-
-        <div id="status" class="status" role="status" aria-live="polite"></div>
+        <button id="submitBtn" class="btn" type="submit">Submit Ticket</button>
+        <div id="submitStatus" class="status" role="status" aria-live="polite"></div>
       </form>
+    </div>
+
+    <!-- MY TICKETS -->
+    <div id="ticketsCard" class="card hide">
+      <h2>My Tickets</h2>
+      <div class="muted">Statuses: Open • Working • Complete</div>
+      <div id="ticketsStatus" class="status" role="status" aria-live="polite"></div>
+      <div style="overflow:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>Created</th>
+              <th>Subject</th>
+              <th>Priority</th>
+              <th>Status</th>
+              <th>Ticket ID</th>
+            </tr>
+          </thead>
+          <tbody id="ticketsBody"></tbody>
+        </table>
+      </div>
     </div>
   </div>
 
   <script type="module">
     import { supabase } from "./supabase.js";
 
-    const form = document.getElementById("ticketForm");
-    const statusEl = document.getElementById("status");
-    const submitBtn = document.getElementById("submitBtn");
+    const authCard = document.getElementById("authCard");
+    const submitCard = document.getElementById("submitCard");
+    const ticketsCard = document.getElementById("ticketsCard");
+    const logoutBtn = document.getElementById("logoutBtn");
 
-    function setStatus(type, msg){
-      statusEl.className = "status " + type;
-      statusEl.textContent = msg;
+    const authStatus = document.getElementById("authStatus");
+    const submitStatus = document.getElementById("submitStatus");
+    const ticketsStatus = document.getElementById("ticketsStatus");
+
+    const loginBtn = document.getElementById("loginBtn");
+    const signupBtn = document.getElementById("signupBtn");
+
+    const emailEl = document.getElementById("authEmail");
+    const passEl  = document.getElementById("authPass");
+
+    const ticketForm = document.getElementById("ticketForm");
+    const submitBtn  = document.getElementById("submitBtn");
+
+    const ticketsBody = document.getElementById("ticketsBody");
+
+    function show(el){ el.classList.remove("hide"); }
+    function hide(el){ el.classList.add("hide"); }
+
+    function setStatus(el, type, msg){
+      el.className = "status " + type; // ok | err
+      el.textContent = msg;
+    }
+    function clearStatus(el){
+      el.className = "status";
+      el.textContent = "";
     }
 
-    form.addEventListener("submit", async (e) => {
+    function pill(status){
+      const s = status || "open";
+      return `<span class="pill ${s}">${s.charAt(0).toUpperCase() + s.slice(1)}</span>`;
+    }
+
+    function fmtDate(iso){
+      try { return new Date(iso).toLocaleString(); } catch { return iso; }
+    }
+
+    async function loadMyTickets(){
+      clearStatus(ticketsStatus);
+      ticketsBody.innerHTML = "";
+
+      const { data, error } = await supabase
+        .from("tickets")
+        .select("id, created_at, subject, priority, status")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error(error);
+        setStatus(ticketsStatus, "err", "❌ Could not load your tickets.");
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        ticketsBody.innerHTML = `<tr><td colspan="5" class="muted">No tickets yet.</td></tr>`;
+        return;
+      }
+
+      ticketsBody.innerHTML = data.map(t => `
+        <tr>
+          <td>${fmtDate(t.created_at)}</td>
+          <td>${escapeHtml(t.subject)}</td>
+          <td>${escapeHtml(t.priority)}</td>
+          <td>${pill(t.status)}</td>
+          <td style="font-family:ui-monospace, SFMono-Regular, Menlo, monospace;font-size:12px">${t.id}</td>
+        </tr>
+      `).join("");
+    }
+
+    function escapeHtml(str){
+      return String(str || "").replace(/[&<>"']/g, s => ({
+        "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+      }[s]));
+    }
+
+    async function setUiForSession(session){
+      if (session?.user) {
+        hide(authCard);
+        show(submitCard);
+        show(ticketsCard);
+        show(logoutBtn);
+        await loadMyTickets();
+      } else {
+        show(authCard);
+        hide(submitCard);
+        hide(ticketsCard);
+        hide(logoutBtn);
+      }
+    }
+
+    // Initial session check
+    const { data: { session } } = await supabase.auth.getSession();
+    await setUiForSession(session);
+
+    // Auth state listener
+    supabase.auth.onAuthStateChange(async (_event, newSession) => {
+      await setUiForSession(newSession);
+    });
+
+    loginBtn.addEventListener("click", async () => {
+      clearStatus(authStatus);
+      const email = emailEl.value.trim();
+      const password = passEl.value.trim();
+
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        setStatus(authStatus, "err", "❌ " + error.message);
+      } else {
+        setStatus(authStatus, "ok", "✅ Logged in.");
+      }
+    });
+
+    signupBtn.addEventListener("click", async () => {
+      clearStatus(authStatus);
+      const email = emailEl.value.trim();
+      const password = passEl.value.trim();
+
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { emailRedirectTo: window.location.origin + "/support.html" }
+      });
+
+      if (error) {
+        setStatus(authStatus, "err", "❌ " + error.message);
+      } else {
+        setStatus(authStatus, "ok", "✅ Account created. Check your email to confirm (if prompted), then login.");
+      }
+    });
+
+    logoutBtn.addEventListener("click", async () => {
+      await supabase.auth.signOut();
+    });
+
+    ticketForm.addEventListener("submit", async (e) => {
       e.preventDefault();
+      clearStatus(submitStatus);
+
       submitBtn.disabled = true;
-      setStatus("ok", "Submitting…");
+      setStatus(submitStatus, "ok", "Submitting…");
+
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
+      if (!user) {
+        setStatus(submitStatus, "err", "❌ Please login first.");
+        submitBtn.disabled = false;
+        return;
+      }
 
       const payload = {
-        requester_name: document.getElementById("name").value.trim(),
-        requester_email: document.getElementById("email").value.trim(),
+        created_by: user.id,
+        requester_name: user.email,        // optional
+        requester_email: user.email,
         priority: document.getElementById("priority").value,
         subject: document.getElementById("subject").value.trim(),
         description: document.getElementById("desc").value.trim(),
@@ -90,19 +304,19 @@
       };
 
       try {
-        const { data, error } = await supabase
-          .from("tickets")
+        const { data, error } = await supabase.from("tickets")
           .insert(payload)
           .select("id")
           .single();
 
         if (error) throw error;
 
-        form.reset();
-        setStatus("ok", `✅ Ticket submitted! Your ticket ID is: ${data.id}`);
+        ticketForm.reset();
+        setStatus(submitStatus, "ok", `✅ Ticket submitted! Ticket ID: ${data.id}`);
+        await loadMyTickets();
       } catch (err) {
         console.error(err);
-        setStatus("err", "❌ Could not submit ticket. Please try again or email support@newage-tech.com.");
+        setStatus(submitStatus, "err", "❌ Could not submit ticket.");
       } finally {
         submitBtn.disabled = false;
       }
