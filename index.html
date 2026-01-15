@@ -1,13 +1,137 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>NewAge Technologies</title>
+  <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>NewAge Technologies | IT Support & Managed Services</title>
+  <meta name="description" content="NewAge Technologies provides managed IT services, networking, cloud support, cybersecurity, and help desk for small businesses." />
+  <style>
+    :root { --bg:#0b1220; --card:#121b2f; --muted:#8ea0c5; --text:#e9eefc; --accent:#5eead4; --accent2:#60a5fa; }
+    *{box-sizing:border-box} body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:radial-gradient(1200px 700px at 20% 10%, #1a2a4a 0%, var(--bg) 55%), var(--bg);color:var(--text);}
+    a{color:inherit;text-decoration:none}
+    .wrap{max-width:1100px;margin:0 auto;padding:28px 18px}
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .logo{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.2px}
+    .mark{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 10px 30px rgba(96,165,250,.25)}
+    nav{display:flex;gap:16px;flex-wrap:wrap}
+    nav a{opacity:.9} nav a:hover{opacity:1}
+    .btn{display:inline-flex;align-items:center;justify-content:center;padding:10px 14px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#08101f;font-weight:700}
+    .btn.secondary{background:transparent;border:1px solid rgba(255,255,255,.18);color:var(--text);font-weight:600}
+    .hero{display:grid;grid-template-columns:1.2fr .8fr;gap:22px;align-items:center;margin-top:26px}
+    .card{background:rgba(18,27,47,.78);border:1px solid rgba(255,255,255,.10);border-radius:18px;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,.35);backdrop-filter: blur(6px)}
+    h1{font-size:44px;line-height:1.05;margin:8px 0 10px}
+    .sub{color:var(--muted);font-size:16px;line-height:1.6;margin:0 0 16px}
+    .pillrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+    .pill{border:1px solid rgba(255,255,255,.14);color:#cfe0ff;padding:7px 10px;border-radius:999px;font-size:13px;opacity:.95}
+    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:18px}
+    .svc h3{margin:10px 0 6px;font-size:16px}
+    .svc p{margin:0;color:var(--muted);font-size:14px;line-height:1.55}
+    .ctaRow{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+    .side h2{margin:0 0 10px;font-size:18px}
+    .list{margin:0;padding:0;list-style:none;display:grid;gap:10px}
+    .list li{display:flex;gap:10px;align-items:flex-start}
+    .dot{width:10px;height:10px;border-radius:50%;margin-top:6px;background:var(--accent)}
+    footer{margin:22px 0 8px;color:rgba(233,238,252,.65);font-size:13px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+    .small{color:rgba(233,238,252,.65)}
+    @media (max-width:900px){.hero{grid-template-columns:1fr}.grid{grid-template-columns:1fr}}
+  </style>
 </head>
+
 <body>
-  <h1>NewAge Technologies</h1>
-  <p>IT Services • Support • Consulting</p>
-  <p>Website coming online.</p>
+  <div class="wrap">
+    <header>
+      <div class="logo">
+        <div class="mark" aria-hidden="true"></div>
+        <div>
+          <div>NewAge Technologies</div>
+          <div class="small">IT Support • Managed Services</div>
+        </div>
+      </div>
+      <nav>
+        <a href="#services">Services</a>
+        <a href="#about">About</a>
+        <a href="#contact">Contact</a>
+        <a class="btn secondary" href="#support">Support</a>
+      </nav>
+    </header>
+
+    <section class="hero">
+      <div class="card">
+        <div class="pillrow">
+          <span class="pill">Fast Response</span>
+          <span class="pill">Small Business IT</span>
+          <span class="pill">Networking • Cloud • Security</span>
+        </div>
+
+        <h1>Reliable IT support that keeps your business running.</h1>
+        <p class="sub">
+          We help small businesses with managed IT services, network setup, cloud support,
+          cybersecurity basics, and troubleshooting—so you can focus on work, not tech.
+        </p>
+
+        <div class="ctaRow">
+          <a class="btn" href="#contact">Request Service</a>
+          <a class="btn secondary" href="#support">Open a Support Ticket (coming soon)</a>
+        </div>
+
+        <div id="services" class="grid">
+          <div class="svc">
+            <h3>Managed IT & Help Desk</h3>
+            <p>Day-to-day support, onboarding/offboarding, device management, and user troubleshooting.</p>
+          </div>
+          <div class="svc">
+            <h3>Networks & Wi-Fi</h3>
+            <p>Firewalls, switches, access points, VLANs, VPN, and reliable business Wi-Fi.</p>
+          </div>
+          <div class="svc">
+            <h3>Servers & Cloud</h3>
+            <p>Windows Server, virtualization, backups, Microsoft 365, and cloud migrations.</p>
+          </div>
+        </div>
+      </div>
+
+      <aside class="card side">
+        <h2>What we do best</h2>
+        <ul class="list">
+          <li><span class="dot"></span><div><strong>Fix issues fast</strong><br><span class="small">Clear communication and practical solutions.</span></div></li>
+          <li><span class="dot"></span><div><strong>Secure your environment</strong><br><span class="small">Baseline security, patching, MFA, backups.</span></div></li>
+          <li><span class="dot"></span><div><strong>Build stable systems</strong><br><span class="small">Networks, servers, Wi-Fi, and monitoring.</span></div></li>
+        </ul>
+
+        <div id="about" style="margin-top:16px">
+          <h2>About</h2>
+          <p class="small" style="line-height:1.6;margin:0">
+            NewAge Technologies provides IT services for small businesses—support, infrastructure,
+            and improvements that reduce downtime and headaches.
+          </p>
+        </div>
+
+        <div id="contact" style="margin-top:16px">
+          <h2>Contact</h2>
+          <p class="small" style="margin:0;line-height:1.6">
+            Email: <a href="mailto:support@newage-tech.com">support@newage-tech.com</a><br/>
+            Phone: <span class="small">(add your number)</span><br/>
+            Location: <span class="small">Charlotte, NC</span>
+          </p>
+        </div>
+
+        <div id="support" style="margin-top:16px">
+          <h2>Support</h2>
+          <p class="small" style="margin:0;line-height:1.6">
+            Ticket portal is coming next. For now, email us and we’ll respond quickly.
+          </p>
+        </div>
+      </aside>
+    </section>
+
+    <footer>
+      <div>© <span id="y"></span> NewAge Technologies. All rights reserved.</div>
+      <div class="small">Powered by Cloudflare Pages</div>
+    </footer>
+  </div>
+
+  <script>
+    document.getElementById("y").textContent = new Date().getFullYear();
+  </script>
 </body>
 </html>
