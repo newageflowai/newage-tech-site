@@ -98,6 +98,8 @@
       <div class="actions" style="margin-top:10px">
         <button id="loginBtn" class="btn" type="button">Login</button>
         <button id="signupBtn" class="btn secondary" type="button">Create Account</button>
+        <button id="forgotBtn" class="btn secondary" type="button">Forgot Password</button>
+
       </div>
       <div id="authStatus" class="status" role="status" aria-live="polite"></div>
       <div class="muted" style="margin-top:10px">
@@ -300,6 +302,8 @@
 
     const loginBtn = document.getElementById("loginBtn");
     const signupBtn = document.getElementById("signupBtn");
+    const forgotBtn = document.getElementById("forgotBtn");
+
     const emailEl = document.getElementById("authEmail");
     const passEl  = document.getElementById("authPass");
 
@@ -809,6 +813,30 @@ function renderUsers(){
       if (error) setStatus(authStatus, "err", "❌ " + error.message);
       else setStatus(authStatus, "ok", "✅ Account created. Then login. Admin can assign role/org.");
     });
+  // Forgot
+    forgotBtn.addEventListener("click", async () => {
+  clearStatus(authStatus);
+
+  const email = emailEl.value.trim();
+  if (!email) {
+    setStatus(authStatus, "err", "❌ Enter your email first, then click Forgot Password.");
+    return;
+  }
+
+  setStatus(authStatus, "ok", "Sending reset email…");
+
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin + "/reset.html"
+  });
+
+  if (error) {
+    console.error(error);
+    setStatus(authStatus, "err", "❌ " + error.message);
+  } else {
+    setStatus(authStatus, "ok", "✅ Reset email sent. Check your inbox (and spam).");
+  }
+});
+
 
     // Logout
     logoutBtn.addEventListener("click", async () => {
