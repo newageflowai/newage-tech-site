@@ -258,7 +258,7 @@
     let currentRole = "user";  // user | manager | admin
     let currentOrgId = null;
 
-    async function loadProfile() {
+  async function loadProfile() {
   const { data: { session } } = await supabase.auth.getSession();
   const user = session?.user;
 
@@ -293,9 +293,7 @@
   currentOrgId = data.org_id || null;
 }
 
-      currentRole = data?.role || "user";
-      currentOrgId = data?.org_id || null;
-    }
+
 
     async function loadMyTickets(){
       clearStatus(mineStatus);
