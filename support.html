@@ -10,10 +10,13 @@
       --bg:#07070A; --card:#0F111B; --border:rgba(255,255,255,.10);
       --text:#F3F6FF; --muted:rgba(243,246,255,.70);
       --accent:#FF6A1A; --accent2:#FFB37A;
+      --ok: rgba(46,230,166,.25);
+      --info: rgba(76,141,255,.35);
+      --warn: rgba(255,179,122,.35);
     }
     body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text)}
     a{color:var(--accent2);text-decoration:none}
-    .wrap{max-width:980px;margin:0 auto;padding:22px 16px}
+    .wrap{max-width:1100px;margin:0 auto;padding:22px 16px}
     .top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
     .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;margin-top:12px}
     h1{margin:10px 0 0}
@@ -25,9 +28,9 @@
     }
     textarea{min-height:120px;resize:vertical}
     .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    @media(max-width:800px){.row{grid-template-columns:1fr}}
+    @media(max-width:900px){.row{grid-template-columns:1fr}}
     .btn{
-      margin-top:14px;padding:11px 14px;border-radius:12px;border:0;
+      padding:11px 14px;border-radius:12px;border:0;
       background:linear-gradient(135deg,var(--accent),var(--accent2));
       color:#12131a;font-weight:800;cursor:pointer
     }
@@ -37,17 +40,20 @@
     .btn:disabled{opacity:.65;cursor:not-allowed}
     .actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
     .status{margin-top:12px;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.03);display:none}
-    .status.ok{display:block;border-color:rgba(46,230,166,.25);background:rgba(46,230,166,.06)}
+    .status.ok{display:block;border-color:var(--ok);background:rgba(46,230,166,.06)}
     .status.err{display:block;border-color:rgba(255,106,26,.35);background:rgba(255,106,26,.06)}
     table{width:100%;border-collapse:collapse;margin-top:8px}
-    th,td{padding:10px;border-bottom:1px solid rgba(255,255,255,.08);text-align:left;font-size:14px}
-    th{color:rgba(243,246,255,.8);font-size:13px}
-    .pill{display:inline-block;padding:5px 9px;border-radius:999px;border:1px solid rgba(255,255,255,.14);font-size:12px;color:rgba(243,246,255,.85)}
-    .pill.open{border-color:rgba(255,179,122,.35)}
-    .pill.working{border-color:rgba(76,141,255,.35)}
-    .pill.complete{border-color:rgba(46,230,166,.35)}
+    th,td{padding:10px;border-bottom:1px solid rgba(255,255,255,.08);text-align:left;font-size:14px;vertical-align:top}
+    th{color:rgba(243,246,255,.85);font-size:13px}
+    .pill{display:inline-block;padding:5px 9px;border-radius:999px;border:1px solid rgba(255,255,255,.14);font-size:12px;color:rgba(243,246,255,.90)}
+    .pill.open{border-color:var(--warn)}
+    .pill.working{border-color:var(--info)}
+    .pill.complete{border-color:var(--ok)}
     .muted{color:var(--muted);font-size:13px;line-height:1.5}
     .hide{display:none !important}
+    .mono{font-family:ui-monospace, SFMono-Regular, Menlo, monospace;font-size:12px}
+    .split{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media(max-width:980px){.split{grid-template-columns:1fr}}
   </style>
 </head>
 
@@ -57,7 +63,7 @@
       <div>
         <img src="/newage_logo_header_64h.png" alt="NewAge Technologies" style="height:42px;width:auto" />
         <h1>Support Portal</h1>
-        <div class="muted">Login to submit tickets and view ticket status.</div>
+        <div class="muted">Login to submit tickets and view status. Managers/Admins can manage tickets.</div>
       </div>
       <div class="actions">
         <a class="btn secondary" href="/">← Back to site</a>
@@ -65,7 +71,7 @@
       </div>
     </div>
 
-    <!-- AUTH CARD -->
+    <!-- AUTH -->
     <div id="authCard" class="card">
       <h2>Login</h2>
       <div class="row">
@@ -84,56 +90,107 @@
       </div>
       <div id="authStatus" class="status" role="status" aria-live="polite"></div>
       <div class="muted" style="margin-top:10px">
-        Admin? Use <a href="/admin.html">Admin Portal</a>.
+        After signup, you may receive an email confirmation depending on your Supabase settings.
       </div>
     </div>
 
-    <!-- TICKET SUBMIT -->
-    <div id="submitCard" class="card hide">
-      <h2>Submit a Ticket</h2>
-      <form id="ticketForm">
-        <div class="row">
-          <div>
-            <label for="priority">Priority</label>
-            <select id="priority">
-              <option value="low">Low</option>
-              <option value="normal" selected>Normal</option>
-              <option value="high">High</option>
-              <option value="urgent">Urgent</option>
-            </select>
+    <!-- PORTAL -->
+    <div id="portal" class="hide">
+      <div class="split">
+        <!-- Submit ticket -->
+        <div class="card">
+          <div class="actions" style="justify-content:space-between;align-items:flex-end">
+            <div>
+              <h2 style="margin:0">Submit a Ticket</h2>
+              <div class="muted">Status options: Open • Working • Complete</div>
+            </div>
+            <div class="muted" id="roleBadge"></div>
           </div>
-          <div>
-            <label for="subject">Subject</label>
-            <input id="subject" required placeholder="Short summary" />
+
+          <form id="ticketForm">
+            <div class="row">
+              <div>
+                <label for="priority">Priority</label>
+                <select id="priority">
+                  <option value="low">Low</option>
+                  <option value="normal" selected>Normal</option>
+                  <option value="high">High</option>
+                  <option value="urgent">Urgent</option>
+                </select>
+              </div>
+              <div>
+                <label for="subject">Subject</label>
+                <input id="subject" required placeholder="Short summary" />
+              </div>
+            </div>
+
+            <label for="desc">Description</label>
+            <textarea id="desc" required placeholder="What’s happening? Include error messages and steps tried."></textarea>
+
+            <button id="submitBtn" class="btn" type="submit">Submit Ticket</button>
+            <div id="submitStatus" class="status" role="status" aria-live="polite"></div>
+          </form>
+
+          <div class="muted" style="margin-top:10px">
+            Tip: Use your email account per company so managers can group tickets by organization.
           </div>
         </div>
 
-        <label for="desc">Description</label>
-        <textarea id="desc" required placeholder="What’s happening? Include errors and what you tried."></textarea>
+        <!-- My tickets -->
+        <div class="card">
+          <div class="actions" style="justify-content:space-between">
+            <div>
+              <h2 style="margin:0">My Tickets</h2>
+              <div class="muted">You only see tickets you created.</div>
+            </div>
+            <button id="refreshMineBtn" class="btn secondary" type="button">Refresh</button>
+          </div>
 
-        <button id="submitBtn" class="btn" type="submit">Submit Ticket</button>
-        <div id="submitStatus" class="status" role="status" aria-live="polite"></div>
-      </form>
-    </div>
+          <div id="mineStatus" class="status" role="status" aria-live="polite"></div>
+          <div style="overflow:auto">
+            <table>
+              <thead>
+                <tr>
+                  <th>Created</th>
+                  <th>Subject</th>
+                  <th>Priority</th>
+                  <th>Status</th>
+                  <th>Ticket ID</th>
+                </tr>
+              </thead>
+              <tbody id="mineBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
 
-    <!-- MY TICKETS -->
-    <div id="ticketsCard" class="card hide">
-      <h2>My Tickets</h2>
-      <div class="muted">Statuses: Open • Working • Complete</div>
-      <div id="ticketsStatus" class="status" role="status" aria-live="polite"></div>
-      <div style="overflow:auto">
-        <table>
-          <thead>
-            <tr>
-              <th>Created</th>
-              <th>Subject</th>
-              <th>Priority</th>
-              <th>Status</th>
-              <th>Ticket ID</th>
-            </tr>
-          </thead>
-          <tbody id="ticketsBody"></tbody>
-        </table>
+      <!-- Manager/Admin panel -->
+      <div id="manageCard" class="card hide">
+        <div class="actions" style="justify-content:space-between">
+          <div>
+            <h2 style="margin:0" id="manageTitle">Manage Tickets</h2>
+            <div class="muted" id="manageDesc"></div>
+          </div>
+          <button id="refreshManageBtn" class="btn secondary" type="button">Refresh</button>
+        </div>
+
+        <div id="manageStatus" class="status" role="status" aria-live="polite"></div>
+
+        <div style="overflow:auto">
+          <table>
+            <thead>
+              <tr>
+                <th>Created</th>
+                <th>Requester</th>
+                <th>Subject</th>
+                <th>Priority</th>
+                <th>Status (change)</th>
+                <th>Ticket ID</th>
+              </tr>
+            </thead>
+            <tbody id="manageBody"></tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
@@ -141,26 +198,36 @@
   <script type="module">
     import { supabase } from "./supabase.js";
 
+    // Elements
     const authCard = document.getElementById("authCard");
-    const submitCard = document.getElementById("submitCard");
-    const ticketsCard = document.getElementById("ticketsCard");
+    const portal = document.getElementById("portal");
     const logoutBtn = document.getElementById("logoutBtn");
 
     const authStatus = document.getElementById("authStatus");
     const submitStatus = document.getElementById("submitStatus");
-    const ticketsStatus = document.getElementById("ticketsStatus");
+    const mineStatus = document.getElementById("mineStatus");
+    const manageStatus = document.getElementById("manageStatus");
 
     const loginBtn = document.getElementById("loginBtn");
     const signupBtn = document.getElementById("signupBtn");
-
     const emailEl = document.getElementById("authEmail");
     const passEl  = document.getElementById("authPass");
 
     const ticketForm = document.getElementById("ticketForm");
-    const submitBtn  = document.getElementById("submitBtn");
+    const submitBtn = document.getElementById("submitBtn");
 
-    const ticketsBody = document.getElementById("ticketsBody");
+    const mineBody = document.getElementById("mineBody");
+    const refreshMineBtn = document.getElementById("refreshMineBtn");
 
+    const manageCard = document.getElementById("manageCard");
+    const manageBody = document.getElementById("manageBody");
+    const refreshManageBtn = document.getElementById("refreshManageBtn");
+
+    const roleBadge = document.getElementById("roleBadge");
+    const manageTitle = document.getElementById("manageTitle");
+    const manageDesc = document.getElementById("manageDesc");
+
+    // Helpers
     function show(el){ el.classList.remove("hide"); }
     function hide(el){ el.classList.add("hide"); }
 
@@ -173,18 +240,45 @@
       el.textContent = "";
     }
 
+    function escapeHtml(str){
+      return String(str || "").replace(/[&<>"']/g, s => ({
+        "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+      }[s]));
+    }
+    function fmtDate(iso){
+      try { return new Date(iso).toLocaleString(); } catch { return iso; }
+    }
     function pill(status){
       const s = status || "open";
       return `<span class="pill ${s}">${s.charAt(0).toUpperCase() + s.slice(1)}</span>`;
     }
 
-    function fmtDate(iso){
-      try { return new Date(iso).toLocaleString(); } catch { return iso; }
+    // State
+    let currentUser = null;
+    let currentRole = "user";  // user | manager | admin
+    let currentOrgId = null;
+
+    async function loadProfile(){
+      // profiles read own policy must allow this
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("role, org_id")
+        .single();
+
+      if (error) {
+        console.error(error);
+        // Default safe
+        currentRole = "user";
+        currentOrgId = null;
+        return;
+      }
+      currentRole = data?.role || "user";
+      currentOrgId = data?.org_id || null;
     }
 
     async function loadMyTickets(){
-      clearStatus(ticketsStatus);
-      ticketsBody.innerHTML = "";
+      clearStatus(mineStatus);
+      mineBody.innerHTML = "";
 
       const { data, error } = await supabase
         .from("tickets")
@@ -193,69 +287,151 @@
 
       if (error) {
         console.error(error);
-        setStatus(ticketsStatus, "err", "❌ Could not load your tickets.");
+        setStatus(mineStatus, "err", "❌ Could not load your tickets.");
         return;
       }
 
       if (!data || data.length === 0) {
-        ticketsBody.innerHTML = `<tr><td colspan="5" class="muted">No tickets yet.</td></tr>`;
+        mineBody.innerHTML = `<tr><td colspan="5" class="muted">No tickets yet.</td></tr>`;
         return;
       }
 
-      ticketsBody.innerHTML = data.map(t => `
+      mineBody.innerHTML = data.map(t => `
         <tr>
           <td>${fmtDate(t.created_at)}</td>
           <td>${escapeHtml(t.subject)}</td>
           <td>${escapeHtml(t.priority)}</td>
           <td>${pill(t.status)}</td>
-          <td style="font-family:ui-monospace, SFMono-Regular, Menlo, monospace;font-size:12px">${t.id}</td>
+          <td class="mono">${t.id}</td>
         </tr>
       `).join("");
     }
 
-    function escapeHtml(str){
-      return String(str || "").replace(/[&<>"']/g, s => ({
-        "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
-      }[s]));
+    async function loadManageTickets(){
+      clearStatus(manageStatus);
+      manageBody.innerHTML = "";
+
+      // Role-based query:
+      // - admin: all tickets (policy allows)
+      // - manager: org tickets (policy allows)
+      // We'll query without filters and let RLS restrict results.
+      const { data, error } = await supabase
+        .from("tickets")
+        .select("id, created_at, requester_email, subject, priority, status")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error(error);
+        setStatus(manageStatus, "err", "❌ Could not load manage tickets (check role/org).");
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        manageBody.innerHTML = `<tr><td colspan="6" class="muted">No tickets available for your role.</td></tr>`;
+        return;
+      }
+
+      manageBody.innerHTML = data.map(t => `
+        <tr>
+          <td>${fmtDate(t.created_at)}</td>
+          <td>${escapeHtml(t.requester_email || "")}</td>
+          <td>${escapeHtml(t.subject)}</td>
+          <td>${escapeHtml(t.priority)}</td>
+          <td>
+            <select data-id="${t.id}">
+              <option value="open" ${t.status==="open"?"selected":""}>open</option>
+              <option value="working" ${t.status==="working"?"selected":""}>working</option>
+              <option value="complete" ${t.status==="complete"?"selected":""}>complete</option>
+            </select>
+          </td>
+          <td class="mono">${t.id}</td>
+        </tr>
+      `).join("");
+
+      // Update handlers (manager/admin policies allow updates)
+      manageBody.querySelectorAll("select[data-id]").forEach(sel => {
+        sel.addEventListener("change", async () => {
+          const id = sel.getAttribute("data-id");
+          const status = sel.value;
+
+          setStatus(manageStatus, "ok", "Updating…");
+          const { error } = await supabase
+            .from("tickets")
+            .update({ status })
+            .eq("id", id);
+
+          if (error) {
+            console.error(error);
+            setStatus(manageStatus, "err", "❌ Update failed (check RLS role/org).");
+          } else {
+            setStatus(manageStatus, "ok", "✅ Status updated.");
+          }
+        });
+      });
     }
 
     async function setUiForSession(session){
-      if (session?.user) {
-        hide(authCard);
-        show(submitCard);
-        show(ticketsCard);
-        show(logoutBtn);
-        await loadMyTickets();
-      } else {
+      if (!session?.user) {
+        currentUser = null;
+        hide(portal);
         show(authCard);
-        hide(submitCard);
-        hide(ticketsCard);
         hide(logoutBtn);
+        return;
+      }
+
+      currentUser = session.user;
+      await loadProfile();
+
+      // Badge
+      const roleLabel = currentRole.toUpperCase();
+      roleBadge.textContent = `Role: ${roleLabel}`;
+
+      // Show portal
+      hide(authCard);
+      show(portal);
+      show(logoutBtn);
+
+      // Show manager/admin panel only when allowed
+      if (currentRole === "manager") {
+        show(manageCard);
+        manageTitle.textContent = "Team Tickets";
+        manageDesc.textContent = "You can view and update tickets for your organization.";
+      } else if (currentRole === "admin") {
+        show(manageCard);
+        manageTitle.textContent = "All Tickets";
+        manageDesc.textContent = "You can view and update all tickets.";
+      } else {
+        hide(manageCard);
+      }
+
+      // Load tables
+      await loadMyTickets();
+      if (currentRole === "manager" || currentRole === "admin") {
+        await loadManageTickets();
       }
     }
 
-    // Initial session check
+    // Initial session
     const { data: { session } } = await supabase.auth.getSession();
     await setUiForSession(session);
 
-    // Auth state listener
+    // Auth events
     supabase.auth.onAuthStateChange(async (_event, newSession) => {
       await setUiForSession(newSession);
     });
 
+    // Login
     loginBtn.addEventListener("click", async () => {
       clearStatus(authStatus);
       const email = emailEl.value.trim();
       const password = passEl.value.trim();
 
       const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) {
-        setStatus(authStatus, "err", "❌ " + error.message);
-      } else {
-        setStatus(authStatus, "ok", "✅ Logged in.");
-      }
+      if (error) setStatus(authStatus, "err", "❌ " + error.message);
+      else setStatus(authStatus, "ok", "✅ Logged in.");
     });
 
+    // Signup
     signupBtn.addEventListener("click", async () => {
       clearStatus(authStatus);
       const email = emailEl.value.trim();
@@ -267,17 +443,16 @@
         options: { emailRedirectTo: window.location.origin + "/support.html" }
       });
 
-      if (error) {
-        setStatus(authStatus, "err", "❌ " + error.message);
-      } else {
-        setStatus(authStatus, "ok", "✅ Account created. Check your email to confirm (if prompted), then login.");
-      }
+      if (error) setStatus(authStatus, "err", "❌ " + error.message);
+      else setStatus(authStatus, "ok", "✅ Account created. Check email if confirmation is enabled, then login.");
     });
 
+    // Logout
     logoutBtn.addEventListener("click", async () => {
       await supabase.auth.signOut();
     });
 
+    // Submit ticket
     ticketForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       clearStatus(submitStatus);
@@ -287,6 +462,7 @@
 
       const { data: { session } } = await supabase.auth.getSession();
       const user = session?.user;
+
       if (!user) {
         setStatus(submitStatus, "err", "❌ Please login first.");
         submitBtn.disabled = false;
@@ -295,16 +471,18 @@
 
       const payload = {
         created_by: user.id,
-        requester_name: user.email,        // optional
         requester_email: user.email,
+        requester_name: user.email,
         priority: document.getElementById("priority").value,
         subject: document.getElementById("subject").value.trim(),
         description: document.getElementById("desc").value.trim(),
-        status: "open"
+        status: "open",
+        org_id: currentOrgId // null allowed; if set, must match user org (RLS)
       };
 
       try {
-        const { data, error } = await supabase.from("tickets")
+        const { data, error } = await supabase
+          .from("tickets")
           .insert(payload)
           .select("id")
           .single();
@@ -314,13 +492,20 @@
         ticketForm.reset();
         setStatus(submitStatus, "ok", `✅ Ticket submitted! Ticket ID: ${data.id}`);
         await loadMyTickets();
+        if (currentRole === "manager" || currentRole === "admin") {
+          await loadManageTickets();
+        }
       } catch (err) {
         console.error(err);
-        setStatus(submitStatus, "err", "❌ Could not submit ticket.");
+        setStatus(submitStatus, "err", "❌ Could not submit ticket (check org/role).");
       } finally {
         submitBtn.disabled = false;
       }
     });
+
+    // Refresh buttons
+    refreshMineBtn.addEventListener("click", loadMyTickets);
+    refreshManageBtn.addEventListener("click", loadManageTickets);
   </script>
 </body>
 </html>
