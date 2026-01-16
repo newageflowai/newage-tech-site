@@ -618,7 +618,7 @@
 
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, role, org_id")
+        .select("id, email, role, org_id")
         .order("created_at", { ascending: false });
 
       if (error) {
