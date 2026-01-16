@@ -641,55 +641,87 @@
       return opts.join("");
     }
 
-    function renderUsers(){
-      usersBody.innerHTML = (profilesCache.length ? profilesCache : []).map(p => `
-        <tr>
-          <td class="mono">${p.id}</td>
-          <td>
-            <select data-role="${p.id}">
-              <option value="user" ${p.role==="user"?"selected":""}>user</option>
-              <option value="manager" ${p.role==="manager"?"selected":""}>manager</option>
-              <option value="admin" ${p.role==="admin"?"selected":""}>admin</option>
-            </select>
-          </td>
-          <td>
-            <select data-org="${p.id}">
-              ${orgOptions(p.org_id)}
-            </select>
-          </td>
-          <td>
-            <button class="btn secondary" data-save="${p.id}" type="button">Save</button>
-          </td>
-        </tr>
-      `).join("") || `<tr><td colspan="4" class="muted">No profiles found.</td></tr>`;
+function renderUsers(){
+  usersBody.innerHTML = (profilesCache.length ? profilesCache : []).map(p => `
+    <tr>
+      <td class="mono">${p.id}</td>
+      <td>${escapeHtml(p.email || "(no email)")}</td>
+      <td>
+        <select data-role="${p.id}">
+          <option value="user" ${p.role==="user"?"selected":""}>user</option>
+          <option value="manager" ${p.role==="manager"?"selected":""}>manager</option>
+          <option value="admin" ${p.role==="admin"?"selected":""}>admin</option>
+        </select>
+      </td>
+      <td>
+        <select data-org="${p.id}">
+          ${orgOptions(p.org_id)}
+        </select>
+      </td>
+      <td class="actions">
+        <button class="btn secondary" data-save="${p.id}" type="button">Save</button>
+        <button class="btn danger" data-del="${p.id}" type="button">Delete</button>
+      </td>
+    </tr>
+  `).join("") || `<tr><td colspan="5" class="muted">No profiles found.</td></tr>`;
 
-      usersBody.querySelectorAll("button[data-save]").forEach(btn => {
-        btn.addEventListener("click", async () => {
-          const id = btn.getAttribute("data-save");
-          const role = usersBody.querySelector(`select[data-role="${id}"]`).value;
-          const orgId = usersBody.querySelector(`select[data-org="${id}"]`).value || null;
+  // Save handler
+  usersBody.querySelectorAll("button[data-save]").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const id = btn.getAttribute("data-save");
+      const role = usersBody.querySelector(`select[data-role="${id}"]`).value;
+      const orgId = usersBody.querySelector(`select[data-org="${id}"]`).value || null;
 
-          setStatus(usersStatus, "ok", "Saving…");
-          const { error } = await supabase
-            .from("profiles")
-            .update({ role, org_id: orgId })
-            .eq("id", id);
+      setStatus(usersStatus, "ok", "Saving…");
+      const { error } = await supabase
+        .from("profiles")
+        .update({ role, org_id: orgId })
+        .eq("id", id);
 
-          if (error) {
-            console.error(error);
-            setStatus(usersStatus, "err", "❌ Save failed. Check profiles admin update policy.");
-          } else {
-            setStatus(usersStatus, "ok", "✅ Updated user profile.");
-            await loadUsers();
-          }
-        });
-      });
-    }
-
-    refreshUsersBtn.addEventListener("click", async () => {
-      await loadOrganizations();
-      await loadUsers();
+      if (error) {
+        console.error(error);
+        setStatus(usersStatus, "err", "❌ Save failed. Check profiles admin update policy.");
+      } else {
+        setStatus(usersStatus, "ok", "✅ Updated user profile.");
+        await loadUsers();
+      }
     });
+  });
+
+  // Delete handler (deletes profile row only)
+  usersBody.querySelectorAll("button[data-del]").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const id = btn.getAttribute("data-del");
+
+      // prevent self-delete
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user?.id === id) {
+        alert("You cannot delete your own admin profile from here.");
+        return;
+      }
+
+      if (!confirm("Delete this user profile? (This removes access to the app, but does NOT delete the auth account.)")) {
+        return;
+      }
+
+      setStatus(usersStatus, "ok", "Deleting…");
+
+      const { error } = await supabase
+        .from("profiles")
+        .delete()
+        .eq("id", id);
+
+      if (error) {
+        console.error(error);
+        setStatus(usersStatus, "err", "❌ Delete failed. Check profiles admin delete policy.");
+      } else {
+        setStatus(usersStatus, "ok", "✅ User profile deleted.");
+        await loadUsers();
+      }
+    });
+  });
+}
+
 
     // ===== UI State =====
     async function setUiForSession(session){
