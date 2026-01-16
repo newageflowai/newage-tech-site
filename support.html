@@ -37,8 +37,8 @@
     .btn.secondary{
       background:transparent;border:1px solid rgba(255,255,255,.16);color:var(--text);font-weight:650
     }
-    .btn.danger{
-      background:transparent;border:1px solid rgba(255,106,26,.45);color:var(--text);font-weight:650
+    .btn.danger:hover{
+    background: rgba(255,106,26,.10);
     }
     .btn:disabled{opacity:.65;cursor:not-allowed}
     .actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
@@ -391,39 +391,33 @@
     tabOrgs.addEventListener("click", () => activateAdminTab("orgs"));
     tabUsers.addEventListener("click", () => activateAdminTab("users"));
 
-    async function loadProfile(){
-      const { data: { session } } = await supabase.auth.getSession();
-      const user = session?.user;
+async function loadProfile(){
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("role, org_id, is_active")
+    .single();
 
-      if (!user) {
-        currentRole = "user";
-        currentOrgId = null;
-        return;
-      }
+  if (error) {
+    console.error(error);
+    currentRole = "user";
+    currentOrgId = null;
+    return;
+  }
 
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("role, org_id")
-        .eq("id", user.id)
-        .maybeSingle();
+  // 🔒 SOFT DELETE CHECK
+  if (data.is_active === false) {
+    alert("Your account has been deactivated. Please contact support.");
+    await supabase.auth.signOut();
 
-      if (error) {
-        console.error("loadProfile error:", error);
-        currentRole = "user";
-        currentOrgId = null;
-        return;
-      }
+    currentRole = "user";
+    currentOrgId = null;
+    return;
+  }
 
-      if (!data) {
-        console.warn("No profile row found for:", user.id);
-        currentRole = "user";
-        currentOrgId = null;
-        return;
-      }
+  currentRole = data?.role || "user";
+  currentOrgId = data?.org_id || null;
+}
 
-      currentRole = data.role || "user";
-      currentOrgId = data.org_id || null;
-    }
 
     async function loadMyTickets(){
       clearStatus(mineStatus);
@@ -624,7 +618,7 @@
 
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, email, role, org_id")
+        .select("id, email, role, org_id, is_active")
         .order("created_at", { ascending: false });
 
       if (error) {
@@ -664,7 +658,9 @@ function renderUsers(){
       </td>
       <td class="actions">
         <button class="btn secondary" data-save="${p.id}" type="button">Save</button>
-        <button class="btn danger" data-del="${p.id}" type="button">Delete</button>
+        <button class="btn danger" data-toggle="${p.id}" type="button">
+  ${p.is_active ? "Deactivate" : "Reactivate"}
+</button>
       </td>
     </tr>
   `).join("") || `<tr><td colspan="5" class="muted">No profiles found.</td></tr>`;
@@ -693,38 +689,41 @@ function renderUsers(){
   });
 
   // Delete handler (deletes profile row only)
-  usersBody.querySelectorAll("button[data-del]").forEach(btn => {
-    btn.addEventListener("click", async () => {
-      const id = btn.getAttribute("data-del");
+usersBody.querySelectorAll("button[data-toggle]").forEach(btn => {
+  btn.addEventListener("click", async () => {
+    const id = btn.getAttribute("data-toggle");
 
-      // prevent self-delete
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user?.id === id) {
-        alert("You cannot delete your own admin profile from here.");
-        return;
-      }
+    // prevent self-deactivate
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user?.id === id) {
+      alert("You cannot deactivate your own account from here.");
+      return;
+    }
 
-      if (!confirm("Delete this user profile? (This removes access to the app, but does NOT delete the auth account.)")) {
-        return;
-      }
+    const userRow = profilesCache.find(x => x.id === id);
+    if (!userRow) return;
 
-      setStatus(usersStatus, "ok", "Deleting…");
+    const nextActive = !userRow.is_active;
 
-      const { error } = await supabase
-        .from("profiles")
-        .delete()
-        .eq("id", id);
+    if (!confirm(`${nextActive ? "Reactivate" : "Deactivate"} this user?`)) return;
 
-      if (error) {
-        console.error(error);
-        setStatus(usersStatus, "err", "❌ Delete failed. Check profiles admin delete policy.");
-      } else {
-        setStatus(usersStatus, "ok", "✅ User profile deleted.");
-        await loadUsers();
-      }
-    });
+    setStatus(usersStatus, "ok", "Saving…");
+
+    const { error } = await supabase
+      .from("profiles")
+      .update({ is_active: nextActive })
+      .eq("id", id);
+
+    if (error) {
+      console.error(error);
+      setStatus(usersStatus, "err", "❌ Update failed (check admin update policy).");
+    } else {
+      setStatus(usersStatus, "ok", `✅ User ${nextActive ? "reactivated" : "deactivated"}.`);
+      await loadUsers();
+    }
   });
-}
+});
+
 
 
     // ===== UI State =====
