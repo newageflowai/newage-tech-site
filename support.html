@@ -37,6 +37,9 @@
     .btn.secondary{
       background:transparent;border:1px solid rgba(255,255,255,.16);color:var(--text);font-weight:650
     }
+    .btn.danger{
+      background:transparent;border:1px solid rgba(255,106,26,.45);color:var(--text);font-weight:650
+    }
     .btn:disabled{opacity:.65;cursor:not-allowed}
     .actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
     .status{margin-top:12px;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.03);display:none}
@@ -54,6 +57,14 @@
     .mono{font-family:ui-monospace, SFMono-Regular, Menlo, monospace;font-size:12px}
     .split{display:grid;grid-template-columns:1fr 1fr;gap:12px}
     @media(max-width:980px){.split{grid-template-columns:1fr}}
+    .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+    .tab{
+      padding:8px 10px;border-radius:12px;border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.03);cursor:pointer;color:var(--text)
+    }
+    .tab.active{border-color:rgba(255,179,122,.45);background:rgba(255,179,122,.06)}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media(max-width:980px){.grid2{grid-template-columns:1fr}}
   </style>
 </head>
 
@@ -90,7 +101,7 @@
       </div>
       <div id="authStatus" class="status" role="status" aria-live="polite"></div>
       <div class="muted" style="margin-top:10px">
-        After signup, you may receive an email confirmation depending on your Supabase settings.
+        New users must sign up here first; admin can then assign roles and organization below.
       </div>
     </div>
 
@@ -192,6 +203,83 @@
           </table>
         </div>
       </div>
+
+      <!-- ADMIN MAINTENANCE -->
+      <div id="adminCard" class="card hide">
+        <div class="actions" style="justify-content:space-between">
+          <div>
+            <h2 style="margin:0">Admin Maintenance</h2>
+            <div class="muted">Manage organizations and assign user roles/orgs.</div>
+          </div>
+        </div>
+
+        <div class="tabs">
+          <button id="tabOrgs" class="tab active" type="button">Organizations</button>
+          <button id="tabUsers" class="tab" type="button">Users & Roles</button>
+        </div>
+
+        <!-- Orgs panel -->
+        <div id="panelOrgs">
+          <div class="grid2" style="margin-top:10px">
+            <div>
+              <label for="newOrgName">New organization name</label>
+              <input id="newOrgName" placeholder="NewAge Internal" />
+              <div class="actions" style="margin-top:10px">
+                <button id="createOrgBtn" class="btn" type="button">Create Organization</button>
+                <button id="refreshOrgsBtn" class="btn secondary" type="button">Refresh</button>
+              </div>
+              <div id="orgStatus" class="status" role="status" aria-live="polite"></div>
+              <div class="muted" style="margin-top:10px">
+                Delete will fail if users/tickets are still linked to the org.
+              </div>
+            </div>
+
+            <div>
+              <div class="muted">Existing organizations</div>
+              <div style="overflow:auto">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Org ID</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="orgsBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Users panel -->
+        <div id="panelUsers" class="hide">
+          <div class="actions" style="justify-content:space-between;align-items:flex-end">
+            <div>
+              <div class="muted">
+                Users show as UUIDs from <b>profiles</b>. Users must sign up on this page first.
+              </div>
+            </div>
+            <button id="refreshUsersBtn" class="btn secondary" type="button">Refresh</button>
+          </div>
+
+          <div id="usersStatus" class="status" role="status" aria-live="polite"></div>
+          <div style="overflow:auto">
+            <table>
+              <thead>
+                <tr>
+                  <th>User UUID</th>
+                  <th>Role</th>
+                  <th>Organization</th>
+                  <th>Save</th>
+                </tr>
+              </thead>
+              <tbody id="usersBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
     </div>
   </div>
 
@@ -227,6 +315,23 @@
     const manageTitle = document.getElementById("manageTitle");
     const manageDesc = document.getElementById("manageDesc");
 
+    // Admin maintenance elements
+    const adminCard = document.getElementById("adminCard");
+    const tabOrgs = document.getElementById("tabOrgs");
+    const tabUsers = document.getElementById("tabUsers");
+    const panelOrgs = document.getElementById("panelOrgs");
+    const panelUsers = document.getElementById("panelUsers");
+
+    const newOrgName = document.getElementById("newOrgName");
+    const createOrgBtn = document.getElementById("createOrgBtn");
+    const refreshOrgsBtn = document.getElementById("refreshOrgsBtn");
+    const orgsBody = document.getElementById("orgsBody");
+    const orgStatus = document.getElementById("orgStatus");
+
+    const refreshUsersBtn = document.getElementById("refreshUsersBtn");
+    const usersBody = document.getElementById("usersBody");
+    const usersStatus = document.getElementById("usersStatus");
+
     // Helpers
     function show(el){ el.classList.remove("hide"); }
     function hide(el){ el.classList.add("hide"); }
@@ -258,42 +363,61 @@
     let currentRole = "user";  // user | manager | admin
     let currentOrgId = null;
 
-  async function loadProfile() {
-  const { data: { session } } = await supabase.auth.getSession();
-  const user = session?.user;
+    // Cache
+    let orgsCache = [];
+    let profilesCache = [];
 
-  if (!user) {
-    currentRole = "user";
-    currentOrgId = null;
-    return;
-  }
+    // Tabs
+    function activateAdminTab(which){
+      tabOrgs.classList.remove("active");
+      tabUsers.classList.remove("active");
+      hide(panelOrgs);
+      hide(panelUsers);
 
-  // IMPORTANT: filter by the logged-in user id
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("role, org_id")
-    .eq("id", user.id)
-    .maybeSingle();
+      if (which === "orgs"){
+        tabOrgs.classList.add("active");
+        show(panelOrgs);
+      } else {
+        tabUsers.classList.add("active");
+        show(panelUsers);
+      }
+    }
+    tabOrgs.addEventListener("click", () => activateAdminTab("orgs"));
+    tabUsers.addEventListener("click", () => activateAdminTab("users"));
 
-  if (error) {
-    console.error("loadProfile error:", error);
-    currentRole = "user";
-    currentOrgId = null;
-    return;
-  }
+    async function loadProfile(){
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
 
-  if (!data) {
-    console.warn("No profile row found for:", user.id);
-    currentRole = "user";
-    currentOrgId = null;
-    return;
-  }
+      if (!user) {
+        currentRole = "user";
+        currentOrgId = null;
+        return;
+      }
 
-  currentRole = data.role || "user";
-  currentOrgId = data.org_id || null;
-}
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("role, org_id")
+        .eq("id", user.id)
+        .maybeSingle();
 
+      if (error) {
+        console.error("loadProfile error:", error);
+        currentRole = "user";
+        currentOrgId = null;
+        return;
+      }
 
+      if (!data) {
+        console.warn("No profile row found for:", user.id);
+        currentRole = "user";
+        currentOrgId = null;
+        return;
+      }
+
+      currentRole = data.role || "user";
+      currentOrgId = data.org_id || null;
+    }
 
     async function loadMyTickets(){
       clearStatus(mineStatus);
@@ -330,10 +454,6 @@
       clearStatus(manageStatus);
       manageBody.innerHTML = "";
 
-      // Role-based query:
-      // - admin: all tickets (policy allows)
-      // - manager: org tickets (policy allows)
-      // We'll query without filters and let RLS restrict results.
       const { data, error } = await supabase
         .from("tickets")
         .select("id, created_at, requester_email, subject, priority, status")
@@ -341,7 +461,7 @@
 
       if (error) {
         console.error(error);
-        setStatus(manageStatus, "err", "❌ Could not load manage tickets (check role/org).");
+        setStatus(manageStatus, "err", "❌ Could not load manage tickets (check RLS role/org).");
         return;
       }
 
@@ -367,7 +487,6 @@
         </tr>
       `).join("");
 
-      // Update handlers (manager/admin policies allow updates)
       manageBody.querySelectorAll("select[data-id]").forEach(sel => {
         sel.addEventListener("change", async () => {
           const id = sel.getAttribute("data-id");
@@ -389,6 +508,188 @@
       });
     }
 
+    // ===== ADMIN MAINTENANCE =====
+
+    async function loadOrganizations(){
+      clearStatus(orgStatus);
+      const { data, error } = await supabase
+        .from("organizations")
+        .select("id, name")
+        .order("name", { ascending: true });
+
+      if (error) {
+        console.error(error);
+        setStatus(orgStatus, "err", "❌ Could not load organizations (check org RLS).");
+        orgsCache = [];
+        renderOrganizations();
+        return;
+      }
+
+      orgsCache = data || [];
+      renderOrganizations();
+    }
+
+    function renderOrganizations(){
+      orgsBody.innerHTML = (orgsCache.length ? orgsCache : []).map(o => `
+        <tr>
+          <td>${escapeHtml(o.name)}</td>
+          <td class="mono">${o.id}</td>
+          <td class="actions">
+            <button class="btn secondary" data-rename="${o.id}" type="button">Rename</button>
+            <button class="btn danger" data-delete="${o.id}" type="button">Delete</button>
+          </td>
+        </tr>
+      `).join("") || `<tr><td colspan="3" class="muted">No organizations yet.</td></tr>`;
+
+      orgsBody.querySelectorAll("button[data-rename]").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const id = btn.getAttribute("data-rename");
+          const cur = orgsCache.find(x => x.id === id);
+          const newName = prompt("Rename organization:", cur?.name || "");
+          if (!newName) return;
+
+          setStatus(orgStatus, "ok", "Updating…");
+          const { error } = await supabase
+            .from("organizations")
+            .update({ name: newName.trim() })
+            .eq("id", id);
+
+          if (error) {
+            console.error(error);
+            setStatus(orgStatus, "err", "❌ Rename failed (name must be unique).");
+          } else {
+            setStatus(orgStatus, "ok", "✅ Organization renamed.");
+            await loadOrganizations();
+            await loadUsers();
+          }
+        });
+      });
+
+      orgsBody.querySelectorAll("button[data-delete]").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const id = btn.getAttribute("data-delete");
+          const cur = orgsCache.find(x => x.id === id);
+          if (!confirm(`Delete organization "${cur?.name}"?`)) return;
+
+          setStatus(orgStatus, "ok", "Deleting…");
+          const { error } = await supabase
+            .from("organizations")
+            .delete()
+            .eq("id", id);
+
+          if (error) {
+            console.error(error);
+            setStatus(orgStatus, "err", "❌ Delete failed. Unlink users/tickets from this org first.");
+          } else {
+            setStatus(orgStatus, "ok", "✅ Organization deleted.");
+            await loadOrganizations();
+            await loadUsers();
+          }
+        });
+      });
+    }
+
+    createOrgBtn.addEventListener("click", async () => {
+      const name = newOrgName.value.trim();
+      if (!name) return;
+
+      clearStatus(orgStatus);
+      setStatus(orgStatus, "ok", "Creating…");
+
+      const { error } = await supabase
+        .from("organizations")
+        .insert({ name });
+
+      if (error) {
+        console.error(error);
+        setStatus(orgStatus, "err", "❌ Create failed (maybe already exists).");
+      } else {
+        newOrgName.value = "";
+        setStatus(orgStatus, "ok", "✅ Organization created.");
+        await loadOrganizations();
+      }
+    });
+
+    refreshOrgsBtn.addEventListener("click", loadOrganizations);
+
+    async function loadUsers(){
+      clearStatus(usersStatus);
+      usersBody.innerHTML = "";
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, role, org_id")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error(error);
+        setStatus(usersStatus, "err", "❌ Could not load users (check profiles admin policy).");
+        profilesCache = [];
+        renderUsers();
+        return;
+      }
+
+      profilesCache = data || [];
+      renderUsers();
+    }
+
+    function orgOptions(selectedId){
+      const opts = [`<option value="">(none)</option>`]
+        .concat(orgsCache.map(o => `<option value="${o.id}" ${o.id===selectedId?"selected":""}>${escapeHtml(o.name)}</option>`));
+      return opts.join("");
+    }
+
+    function renderUsers(){
+      usersBody.innerHTML = (profilesCache.length ? profilesCache : []).map(p => `
+        <tr>
+          <td class="mono">${p.id}</td>
+          <td>
+            <select data-role="${p.id}">
+              <option value="user" ${p.role==="user"?"selected":""}>user</option>
+              <option value="manager" ${p.role==="manager"?"selected":""}>manager</option>
+              <option value="admin" ${p.role==="admin"?"selected":""}>admin</option>
+            </select>
+          </td>
+          <td>
+            <select data-org="${p.id}">
+              ${orgOptions(p.org_id)}
+            </select>
+          </td>
+          <td>
+            <button class="btn secondary" data-save="${p.id}" type="button">Save</button>
+          </td>
+        </tr>
+      `).join("") || `<tr><td colspan="4" class="muted">No profiles found.</td></tr>`;
+
+      usersBody.querySelectorAll("button[data-save]").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const id = btn.getAttribute("data-save");
+          const role = usersBody.querySelector(`select[data-role="${id}"]`).value;
+          const orgId = usersBody.querySelector(`select[data-org="${id}"]`).value || null;
+
+          setStatus(usersStatus, "ok", "Saving…");
+          const { error } = await supabase
+            .from("profiles")
+            .update({ role, org_id: orgId })
+            .eq("id", id);
+
+          if (error) {
+            console.error(error);
+            setStatus(usersStatus, "err", "❌ Save failed. Check profiles admin update policy.");
+          } else {
+            setStatus(usersStatus, "ok", "✅ Updated user profile.");
+            await loadUsers();
+          }
+        });
+      });
+    }
+
+    refreshUsersBtn.addEventListener("click", async () => {
+      await loadOrganizations();
+      await loadUsers();
+    });
+
+    // ===== UI State =====
     async function setUiForSession(session){
       if (!session?.user) {
         currentUser = null;
@@ -402,15 +703,14 @@
       await loadProfile();
 
       // Badge
-      const roleLabel = currentRole.toUpperCase();
-      roleBadge.textContent = `Role: ${roleLabel}`;
+      roleBadge.textContent = `Role: ${currentRole.toUpperCase()}`;
 
       // Show portal
       hide(authCard);
       show(portal);
       show(logoutBtn);
 
-      // Show manager/admin panel only when allowed
+      // Manager/admin ticket panel
       if (currentRole === "manager") {
         show(manageCard);
         manageTitle.textContent = "Team Tickets";
@@ -423,7 +723,17 @@
         hide(manageCard);
       }
 
-      // Load tables
+      // Admin maintenance panel
+      if (currentRole === "admin") {
+        show(adminCard);
+        activateAdminTab("orgs");
+        await loadOrganizations();
+        await loadUsers();
+      } else {
+        hide(adminCard);
+      }
+
+      // Load ticket tables
       await loadMyTickets();
       if (currentRole === "manager" || currentRole === "admin") {
         await loadManageTickets();
@@ -463,7 +773,7 @@
       });
 
       if (error) setStatus(authStatus, "err", "❌ " + error.message);
-      else setStatus(authStatus, "ok", "✅ Account created. Check email if confirmation is enabled, then login.");
+      else setStatus(authStatus, "ok", "✅ Account created. Then login. Admin can assign role/org.");
     });
 
     // Logout
@@ -496,7 +806,7 @@
         subject: document.getElementById("subject").value.trim(),
         description: document.getElementById("desc").value.trim(),
         status: "open",
-        org_id: currentOrgId // null allowed; if set, must match user org (RLS)
+        org_id: currentOrgId
       };
 
       try {
@@ -516,7 +826,7 @@
         }
       } catch (err) {
         console.error(err);
-        setStatus(submitStatus, "err", "❌ Could not submit ticket (check org/role).");
+        setStatus(submitStatus, "err", "❌ Could not submit ticket (check RLS).");
       } finally {
         submitBtn.disabled = false;
       }
