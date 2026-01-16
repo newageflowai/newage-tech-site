@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Reset Password | NewAge Technologies</title>
+  <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+  <style>
+    :root{
+      --bg:#07070A; --card:#0F111B; --border:rgba(255,255,255,.10);
+      --text:#F3F6FF; --muted:rgba(243,246,255,.70);
+      --accent:#FF6A1A; --accent2:#FFB37A;
+      --ok: rgba(46,230,166,.25);
+    }
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text)}
+    .wrap{max-width:700px;margin:0 auto;padding:22px 16px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;margin-top:12px}
+    h1{margin:10px 0 0}
+    h2{margin:0 0 8px}
+    label{display:block;margin-top:12px;color:var(--muted);font-size:13px}
+    input{
+      width:100%;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.03);color:var(--text);outline:none;font-size:14px
+    }
+    .actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px}
+    .btn{
+      padding:11px 14px;border-radius:12px;border:0;
+      background:linear-gradient(135deg,var(--accent),var(--accent2));
+      color:#12131a;font-weight:800;cursor:pointer
+    }
+    .btn.secondary{
+      background:transparent;border:1px solid rgba(255,255,255,.16);color:var(--text);font-weight:650
+    }
+    .btn:disabled{opacity:.65;cursor:not-allowed}
+    .status{margin-top:12px;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.03);display:none}
+    .status.ok{display:block;border-color:var(--ok);background:rgba(46,230,166,.06)}
+    .status.err{display:block;border-color:rgba(255,106,26,.35);background:rgba(255,106,26,.06)}
+    .muted{color:var(--muted);font-size:13px;line-height:1.5}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div>
+      <img src="/newage_logo_header_64h.png" alt="NewAge Technologies" style="height:42px;width:auto" />
+      <h1>Reset Password</h1>
+      <div class="muted">Use the form below to set a new password.</div>
+    </div>
+
+    <div class="card">
+      <h2>Set a new password</h2>
+
+      <div class="muted" id="modeInfo" style="margin-bottom:10px">
+        Loading…
+      </div>
+
+      <form id="resetForm" class="hide">
+        <label for="newPass">New password</label>
+        <input id="newPass" type="password" placeholder="New password" required />
+
+        <label for="newPass2">Confirm new password</label>
+        <input id="newPass2" type="password" placeholder="Confirm password" required />
+
+        <div class="actions">
+          <button id="saveBtn" class="btn" type="submit">Update Password</button>
+          <a class="btn secondary" href="/support.html">Back to Login</a>
+        </div>
+      </form>
+
+      <div id="status" class="status" role="status" aria-live="polite"></div>
+
+      <div class="muted" style="margin-top:12px">
+        If you opened this page directly, you must use the password reset email link.
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { supabase } from "./supabase.js";
+
+    const modeInfo = document.getElementById("modeInfo");
+    const resetForm = document.getElementById("resetForm");
+    const statusEl = document.getElementById("status");
+    const saveBtn = document.getElementById("saveBtn");
+
+    const newPass = document.getElementById("newPass");
+    const newPass2 = document.getElementById("newPass2");
+
+    function show(el){ el.classList.remove("hide"); }
+    function hide(el){ el.classList.add("hide"); }
+    function setStatus(type, msg){
+      statusEl.className = "status " + type;
+      statusEl.textContent = msg;
+    }
+    function clearStatus(){
+      statusEl.className = "status";
+      statusEl.textContent = "";
+    }
+
+    // Supabase will deliver the session to the browser on this page after clicking the email link.
+    // For PKCE flow, the session is established automatically.
+    const { data: { session } } = await supabase.auth.getSession();
+
+    if (!session) {
+      modeInfo.textContent = "No reset session detected. Please use the reset link from your email.";
+      hide(resetForm);
+    } else {
+      modeInfo.textContent = "Session detected. Enter a new password below.";
+      show(resetForm);
+    }
+
+    resetForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      clearStatus();
+
+      const p1 = newPass.value.trim();
+      const p2 = newPass2.value.trim();
+
+      if (p1.length < 8) {
+        setStatus("err", "❌ Password must be at least 8 characters.");
+        return;
+      }
+      if (p1 !== p2) {
+        setStatus("err", "❌ Passwords do not match.");
+        return;
+      }
+
+      saveBtn.disabled = true;
+      setStatus("ok", "Updating…");
+
+      const { error } = await supabase.auth.updateUser({ password: p1 });
+
+      if (error) {
+        console.error(error);
+        setStatus("err", "❌ " + error.message);
+        saveBtn.disabled = false;
+        return;
+      }
+
+      setStatus("ok", "✅ Password updated. You can now log in.");
+      // Optional: sign out so they re-login cleanly
+      await supabase.auth.signOut();
+      setTimeout(() => { window.location.href = "/support.html"; }, 1200);
+    });
+  </script>
+</body>
+</html>
