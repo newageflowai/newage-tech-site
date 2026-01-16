@@ -258,20 +258,41 @@
     let currentRole = "user";  // user | manager | admin
     let currentOrgId = null;
 
-    async function loadProfile(){
-      // profiles read own policy must allow this
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("role, org_id")
-        .single();
+    async function loadProfile() {
+  const { data: { session } } = await supabase.auth.getSession();
+  const user = session?.user;
 
-      if (error) {
-        console.error(error);
-        // Default safe
-        currentRole = "user";
-        currentOrgId = null;
-        return;
-      }
+  if (!user) {
+    currentRole = "user";
+    currentOrgId = null;
+    return;
+  }
+
+  // IMPORTANT: filter by the logged-in user id
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("role, org_id")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (error) {
+    console.error("loadProfile error:", error);
+    currentRole = "user";
+    currentOrgId = null;
+    return;
+  }
+
+  if (!data) {
+    console.warn("No profile row found for:", user.id);
+    currentRole = "user";
+    currentOrgId = null;
+    return;
+  }
+
+  currentRole = data.role || "user";
+  currentOrgId = data.org_id || null;
+}
+
       currentRole = data?.role || "user";
       currentOrgId = data?.org_id || null;
     }
