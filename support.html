@@ -79,6 +79,7 @@
       <div class="actions">
         <a class="btn secondary" href="/">← Back to site</a>
         <button id="logoutBtn" class="btn secondary hide" type="button">Logout</button>
+        <a id="adminLink" class="btn secondary hide" href="#admin">Admin Maintenance</a>
       </div>
     </div>
 
@@ -207,7 +208,7 @@
       </div>
 
       <!-- ADMIN MAINTENANCE -->
-      <div id="adminCard" class="card hide">
+      <div id="adminMaintenance" class="card hide">
         <div class="actions" style="justify-content:space-between">
           <div>
             <h2 style="margin:0">Admin Maintenance</h2>
@@ -322,7 +323,8 @@
     const manageDesc = document.getElementById("manageDesc");
 
     // Admin maintenance elements
-    const adminCard = document.getElementById("adminCard");
+    const adminMaintenance = document.getElementById("adminMaintenance");
+    const adminLink = document.getElementById("adminLink");
     const tabOrgs = document.getElementById("tabOrgs");
     const tabUsers = document.getElementById("tabUsers");
     const panelOrgs = document.getElementById("panelOrgs");
@@ -341,6 +343,9 @@
     // Helpers
     function show(el){ el.classList.remove("hide"); }
     function hide(el){ el.classList.add("hide"); }
+    function goToHash(hash){
+    if (window.location.hash !== hash) window.location.hash = hash;
+    }
 
     function setStatus(el, type, msg){
       el.className = "status " + type; // ok | err
@@ -738,6 +743,21 @@ usersBody.querySelectorAll("button[data-toggle]").forEach(btn => {
 
       currentUser = session.user;
       await loadProfile();
+      // --- Admin route guard (#admin)
+const wantsAdminView = window.location.hash === "#admin";
+
+// Show admin link only for admins
+if (adminLink) {
+  if (currentRole === "admin") show(adminLink);
+  else hide(adminLink);
+}
+
+// If non-admin tries to access #admin, bounce them back
+if (wantsAdminView && currentRole !== "admin") {
+  goToHash("#");
+  setStatus(mineStatus, "err", "❌ Admin access required.");
+}
+
 
       // Badge
       roleBadge.textContent = `Role: ${currentRole.toUpperCase()}`;
@@ -760,15 +780,20 @@ usersBody.querySelectorAll("button[data-toggle]").forEach(btn => {
         hide(manageCard);
       }
 
-      // Admin maintenance panel
-      if (currentRole === "admin") {
-        show(adminCard);
-        activateAdminTab("orgs");
-        await loadOrganizations();
-        await loadUsers();
-      } else {
-        hide(adminCard);
-      }
+// Admin maintenance panel (admins only + only when #admin)
+const wantsAdminView2 = window.location.hash === "#admin";
+
+if (adminMaintenance) {
+if (currentRole === "admin" && wantsAdminView2) {
+show(adminMaintenance);
+activateAdminTab("orgs");
+await loadOrganizations();
+await loadUsers();
+} else {
+    hide(adminMaintenance);
+}
+}
+
 
       // Load ticket tables
       await loadMyTickets();
@@ -780,11 +805,23 @@ usersBody.querySelectorAll("button[data-toggle]").forEach(btn => {
     // Initial session
     const { data: { session } } = await supabase.auth.getSession();
     await setUiForSession(session);
+    if (window.location.hash === "#admin") {
+    // ensures correct view on direct load
+    const { data: { session: s2 } } = await supabase.auth.getSession();
+    await setUiForSession(s2);
+    }
+
 
     // Auth events
     supabase.auth.onAuthStateChange(async (_event, newSession) => {
       await setUiForSession(newSession);
     });
+  
+   // Hash route changes (ex: #admin)
+   window.addEventListener("hashchange", async () => {
+   const { data: { session } } = await supabase.auth.getSession();
+   await setUiForSession(session);
+   });
 
     // Login
     loginBtn.addEventListener("click", async () => {
