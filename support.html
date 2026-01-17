@@ -37,8 +37,14 @@
     .btn.secondary{
       background:transparent;border:1px solid rgba(255,255,255,.16);color:var(--text);font-weight:650
     }
+    .btn.danger{
+      background:transparent;
+      border:1px solid rgba(255,106,26,.45);
+      color:var(--text);
+      font-weight:750;
+    }
     .btn.danger:hover{
-    background: rgba(255,106,26,.10);
+      background: rgba(255,106,26,.10);
     }
     .btn:disabled{opacity:.65;cursor:not-allowed}
     .actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
@@ -100,7 +106,6 @@
         <button id="loginBtn" class="btn" type="button">Login</button>
         <button id="signupBtn" class="btn secondary" type="button">Create Account</button>
         <button id="forgotBtn" class="btn secondary" type="button">Forgot Password</button>
-
       </div>
       <div id="authStatus" class="status" role="status" aria-live="polite"></div>
       <div class="muted" style="margin-top:10px">
@@ -271,12 +276,11 @@
             <table>
               <thead>
                 <tr>
-<th>User UUID</th>
-<th>Email</th>
-<th>Role</th>
-<th>Organization</th>
-<th>Actions</th>
-
+                  <th>User UUID</th>
+                  <th>Email</th>
+                  <th>Role</th>
+                  <th>Organization</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody id="usersBody"></tbody>
@@ -344,7 +348,7 @@
     function show(el){ el.classList.remove("hide"); }
     function hide(el){ el.classList.add("hide"); }
     function goToHash(hash){
-    if (window.location.hash !== hash) window.location.hash = hash;
+      if (window.location.hash !== hash) window.location.hash = hash;
     }
 
     function setStatus(el, type, msg){
@@ -396,33 +400,32 @@
     tabOrgs.addEventListener("click", () => activateAdminTab("orgs"));
     tabUsers.addEventListener("click", () => activateAdminTab("users"));
 
-async function loadProfile(){
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("role, org_id, is_active")
-    .single();
+    async function loadProfile(){
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("role, org_id, is_active")
+        .single();
 
-  if (error) {
-    console.error(error);
-    currentRole = "user";
-    currentOrgId = null;
-    return;
-  }
+      if (error) {
+        console.error(error);
+        currentRole = "user";
+        currentOrgId = null;
+        return;
+      }
 
-  // 🔒 SOFT DELETE CHECK
-  if (data.is_active === false) {
-    alert("Your account has been deactivated. Please contact support.");
-    await supabase.auth.signOut();
+      // 🔒 SOFT DELETE CHECK
+      if (data.is_active === false) {
+        alert("Your account has been deactivated. Please contact support.");
+        await supabase.auth.signOut();
 
-    currentRole = "user";
-    currentOrgId = null;
-    return;
-  }
+        currentRole = "user";
+        currentOrgId = null;
+        return;
+      }
 
-  currentRole = data?.role || "user";
-  currentOrgId = data?.org_id || null;
-}
-
+      currentRole = data?.role || "user";
+      currentOrgId = data?.org_id || null;
+    }
 
     async function loadMyTickets(){
       clearStatus(mineStatus);
@@ -616,6 +619,10 @@ async function loadProfile(){
     });
 
     refreshOrgsBtn.addEventListener("click", loadOrganizations);
+    refreshUsersBtn.addEventListener("click", async () => {
+      await loadOrganizations();
+      await loadUsers();
+    });
 
     async function loadUsers(){
       clearStatus(usersStatus);
@@ -644,92 +651,89 @@ async function loadProfile(){
       return opts.join("");
     }
 
-function renderUsers(){
-  usersBody.innerHTML = (profilesCache.length ? profilesCache : []).map(p => `
-    <tr>
-      <td class="mono">${p.id}</td>
-      <td>${escapeHtml(p.email || "(no email)")}</td>
-      <td>
-        <select data-role="${p.id}">
-          <option value="user" ${p.role==="user"?"selected":""}>user</option>
-          <option value="manager" ${p.role==="manager"?"selected":""}>manager</option>
-          <option value="admin" ${p.role==="admin"?"selected":""}>admin</option>
-        </select>
-      </td>
-      <td>
-        <select data-org="${p.id}">
-          ${orgOptions(p.org_id)}
-        </select>
-      </td>
-      <td class="actions">
-        <button class="btn secondary" data-save="${p.id}" type="button">Save</button>
-        <button class="btn danger" data-toggle="${p.id}" type="button">
-  ${p.is_active ? "Deactivate" : "Reactivate"}
-</button>
-      </td>
-    </tr>
-  `).join("") || `<tr><td colspan="5" class="muted">No profiles found.</td></tr>`;
+    function renderUsers(){
+      usersBody.innerHTML = (profilesCache.length ? profilesCache : []).map(p => `
+        <tr>
+          <td class="mono">${p.id}</td>
+          <td>${escapeHtml(p.email || "(no email)")}</td>
+          <td>
+            <select data-role="${p.id}">
+              <option value="user" ${p.role==="user"?"selected":""}>user</option>
+              <option value="manager" ${p.role==="manager"?"selected":""}>manager</option>
+              <option value="admin" ${p.role==="admin"?"selected":""}>admin</option>
+            </select>
+          </td>
+          <td>
+            <select data-org="${p.id}">
+              ${orgOptions(p.org_id)}
+            </select>
+          </td>
+          <td class="actions">
+            <button class="btn secondary" data-save="${p.id}" type="button">Save</button>
+            <button class="btn danger" data-toggle="${p.id}" type="button">
+              ${p.is_active ? "Deactivate" : "Reactivate"}
+            </button>
+          </td>
+        </tr>
+      `).join("") || `<tr><td colspan="5" class="muted">No profiles found.</td></tr>`;
 
-  // Save handler
-  usersBody.querySelectorAll("button[data-save]").forEach(btn => {
-    btn.addEventListener("click", async () => {
-      const id = btn.getAttribute("data-save");
-      const role = usersBody.querySelector(`select[data-role="${id}"]`).value;
-      const orgId = usersBody.querySelector(`select[data-org="${id}"]`).value || null;
+      // Save handler
+      usersBody.querySelectorAll("button[data-save]").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const id = btn.getAttribute("data-save");
+          const role = usersBody.querySelector(`select[data-role="${id}"]`).value;
+          const orgId = usersBody.querySelector(`select[data-org="${id}"]`).value || null;
 
-      setStatus(usersStatus, "ok", "Saving…");
-      const { error } = await supabase
-        .from("profiles")
-        .update({ role, org_id: orgId })
-        .eq("id", id);
+          setStatus(usersStatus, "ok", "Saving…");
+          const { error } = await supabase
+            .from("profiles")
+            .update({ role, org_id: orgId })
+            .eq("id", id);
 
-      if (error) {
-        console.error(error);
-        setStatus(usersStatus, "err", "❌ Save failed. Check profiles admin update policy.");
-      } else {
-        setStatus(usersStatus, "ok", "✅ Updated user profile.");
-        await loadUsers();
-      }
-    });
-  });
+          if (error) {
+            console.error(error);
+            setStatus(usersStatus, "err", "❌ Save failed. Check profiles admin update policy.");
+          } else {
+            setStatus(usersStatus, "ok", "✅ Updated user profile.");
+            await loadUsers();
+          }
+        });
+      });
 
-  // Delete handler (deletes profile row only)
-usersBody.querySelectorAll("button[data-toggle]").forEach(btn => {
-  btn.addEventListener("click", async () => {
-    const id = btn.getAttribute("data-toggle");
+      // Soft delete / reactivate handler
+      usersBody.querySelectorAll("button[data-toggle]").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const id = btn.getAttribute("data-toggle");
 
-    // prevent self-deactivate
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session?.user?.id === id) {
-      alert("You cannot deactivate your own account from here.");
-      return;
+          // prevent self-deactivate
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.user?.id === id) {
+            alert("You cannot deactivate your own account from here.");
+            return;
+          }
+
+          const userRow = profilesCache.find(x => x.id === id);
+          if (!userRow) return;
+
+          const nextActive = !userRow.is_active;
+          if (!confirm(`${nextActive ? "Reactivate" : "Deactivate"} this user?`)) return;
+
+          setStatus(usersStatus, "ok", "Saving…");
+          const { error } = await supabase
+            .from("profiles")
+            .update({ is_active: nextActive })
+            .eq("id", id);
+
+          if (error) {
+            console.error(error);
+            setStatus(usersStatus, "err", "❌ Update failed (check admin update policy).");
+          } else {
+            setStatus(usersStatus, "ok", `✅ User ${nextActive ? "reactivated" : "deactivated"}.`);
+            await loadUsers();
+          }
+        });
+      });
     }
-
-    const userRow = profilesCache.find(x => x.id === id);
-    if (!userRow) return;
-
-    const nextActive = !userRow.is_active;
-
-    if (!confirm(`${nextActive ? "Reactivate" : "Deactivate"} this user?`)) return;
-
-    setStatus(usersStatus, "ok", "Saving…");
-
-    const { error } = await supabase
-      .from("profiles")
-      .update({ is_active: nextActive })
-      .eq("id", id);
-
-    if (error) {
-      console.error(error);
-      setStatus(usersStatus, "err", "❌ Update failed (check admin update policy).");
-    } else {
-      setStatus(usersStatus, "ok", `✅ User ${nextActive ? "reactivated" : "deactivated"}.`);
-      await loadUsers();
-    }
-  });
-});
-
-
 
     // ===== UI State =====
     async function setUiForSession(session){
@@ -738,26 +742,28 @@ usersBody.querySelectorAll("button[data-toggle]").forEach(btn => {
         hide(portal);
         show(authCard);
         hide(logoutBtn);
+        if (adminLink) hide(adminLink);
+        if (adminMaintenance) hide(adminMaintenance);
         return;
       }
 
       currentUser = session.user;
       await loadProfile();
+
       // --- Admin route guard (#admin)
-const wantsAdminView = window.location.hash === "#admin";
+      const wantsAdminView = window.location.hash === "#admin";
 
-// Show admin link only for admins
-if (adminLink) {
-  if (currentRole === "admin") show(adminLink);
-  else hide(adminLink);
-}
+      // Show admin link only for admins
+      if (adminLink) {
+        if (currentRole === "admin") show(adminLink);
+        else hide(adminLink);
+      }
 
-// If non-admin tries to access #admin, bounce them back
-if (wantsAdminView && currentRole !== "admin") {
-  goToHash("#");
-  setStatus(mineStatus, "err", "❌ Admin access required.");
-}
-
+      // If non-admin tries to access #admin, bounce them back
+      if (wantsAdminView && currentRole !== "admin") {
+        goToHash("#");
+        setStatus(mineStatus, "err", "❌ Admin access required.");
+      }
 
       // Badge
       roleBadge.textContent = `Role: ${currentRole.toUpperCase()}`;
@@ -780,20 +786,17 @@ if (wantsAdminView && currentRole !== "admin") {
         hide(manageCard);
       }
 
-// Admin maintenance panel (admins only + only when #admin)
-const wantsAdminView2 = window.location.hash === "#admin";
-
-if (adminMaintenance) {
-if (currentRole === "admin" && wantsAdminView2) {
-show(adminMaintenance);
-activateAdminTab("orgs");
-await loadOrganizations();
-await loadUsers();
-} else {
-    hide(adminMaintenance);
-}
-}
-
+      // Admin maintenance panel (admins only + only when #admin)
+      if (adminMaintenance) {
+        if (currentRole === "admin" && window.location.hash === "#admin") {
+          show(adminMaintenance);
+          activateAdminTab("orgs");
+          await loadOrganizations();
+          await loadUsers();
+        } else {
+          hide(adminMaintenance);
+        }
+      }
 
       // Load ticket tables
       await loadMyTickets();
@@ -805,23 +808,17 @@ await loadUsers();
     // Initial session
     const { data: { session } } = await supabase.auth.getSession();
     await setUiForSession(session);
-    if (window.location.hash === "#admin") {
-    // ensures correct view on direct load
-    const { data: { session: s2 } } = await supabase.auth.getSession();
-    await setUiForSession(s2);
-    }
-
 
     // Auth events
     supabase.auth.onAuthStateChange(async (_event, newSession) => {
       await setUiForSession(newSession);
     });
-  
-   // Hash route changes (ex: #admin)
-   window.addEventListener("hashchange", async () => {
-   const { data: { session } } = await supabase.auth.getSession();
-   await setUiForSession(session);
-   });
+
+    // Hash route changes (ex: #admin)
+    window.addEventListener("hashchange", async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      await setUiForSession(session);
+    });
 
     // Login
     loginBtn.addEventListener("click", async () => {
@@ -849,30 +846,30 @@ await loadUsers();
       if (error) setStatus(authStatus, "err", "❌ " + error.message);
       else setStatus(authStatus, "ok", "✅ Account created. Then login. Admin can assign role/org.");
     });
-  // Forgot
+
+    // Forgot
     forgotBtn.addEventListener("click", async () => {
-  clearStatus(authStatus);
+      clearStatus(authStatus);
 
-  const email = emailEl.value.trim();
-  if (!email) {
-    setStatus(authStatus, "err", "❌ Enter your email first, then click Forgot Password.");
-    return;
-  }
+      const email = emailEl.value.trim();
+      if (!email) {
+        setStatus(authStatus, "err", "❌ Enter your email first, then click Forgot Password.");
+        return;
+      }
 
-  setStatus(authStatus, "ok", "Sending reset email…");
+      setStatus(authStatus, "ok", "Sending reset email…");
 
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: window.location.origin + "/reset.html"
-  });
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + "/reset.html"
+      });
 
-  if (error) {
-    console.error(error);
-    setStatus(authStatus, "err", "❌ " + error.message);
-  } else {
-    setStatus(authStatus, "ok", "✅ Reset email sent. Check your inbox (and spam).");
-  }
-});
-
+      if (error) {
+        console.error(error);
+        setStatus(authStatus, "err", "❌ " + error.message);
+      } else {
+        setStatus(authStatus, "ok", "✅ Reset email sent. Check your inbox (and spam).");
+      }
+    });
 
     // Logout
     logoutBtn.addEventListener("click", async () => {
