@@ -37,6 +37,7 @@
     .btn.secondary{
       background:transparent;border:1px solid rgba(255,255,255,.16);color:var(--text);font-weight:650
     }
+    .btn.small{padding:7px 10px;border-radius:10px;font-weight:700;font-size:12px}
     .btn.danger:hover{ background: rgba(255,106,26,.10); }
     .btn:disabled{opacity:.65;cursor:not-allowed}
     .actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
@@ -63,6 +64,50 @@
     .tab.active{border-color:rgba(255,179,122,.45);background:rgba(255,179,122,.06)}
     .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
     @media(max-width:980px){.grid2{grid-template-columns:1fr}}
+
+    /* ===== Comments modal ===== */
+    .overlay{
+      position:fixed; inset:0;
+      background:rgba(0,0,0,.55);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:16px;
+      z-index:9999;
+    }
+    .overlay.show{display:flex}
+    .modal{
+      width:min(860px, 100%);
+      max-height:85vh;
+      overflow:auto;
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:14px;
+      box-shadow:0 16px 40px rgba(0,0,0,.45);
+    }
+    .modal-head{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .comment-list{
+      margin-top:10px;
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:14px;
+      background:rgba(255,255,255,.03);
+      padding:10px;
+    }
+    .comment-item{
+      padding:10px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+    }
+    .comment-item:last-child{border-bottom:0}
+    .comment-meta{color:rgba(243,246,255,.75);font-size:12px;margin-bottom:6px}
+    .comment-body{white-space:pre-wrap}
+    .modal-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px}
   </style>
 </head>
 
@@ -167,6 +212,7 @@
                   <th>Priority</th>
                   <th>Status</th>
                   <th>Ticket ID</th>
+                  <th>Comments</th>
                 </tr>
               </thead>
               <tbody id="mineBody"></tbody>
@@ -197,6 +243,7 @@
                 <th>Priority</th>
                 <th>Status (change)</th>
                 <th>Ticket ID</th>
+                <th>Comments</th>
               </tr>
             </thead>
             <tbody id="manageBody"></tbody>
@@ -282,6 +329,36 @@
     </div>
   </div>
 
+  <!-- COMMENTS MODAL -->
+  <div id="commentsOverlay" class="overlay" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="commentsTitle">
+      <div class="modal-head">
+        <div>
+          <h2 id="commentsTitle" style="margin:0">Ticket Comments</h2>
+          <div class="muted" id="commentsSub"></div>
+        </div>
+        <div class="actions">
+          <button id="commentsCloseBtn" class="btn secondary small" type="button">Close</button>
+        </div>
+      </div>
+
+      <div id="commentsStatus" class="status" role="status" aria-live="polite"></div>
+
+      <div class="comment-list" id="commentsList">
+        <div class="muted">No comments yet.</div>
+      </div>
+
+      <div style="margin-top:10px">
+        <label for="commentText">Add a comment</label>
+        <textarea id="commentText" placeholder="Type your update..."></textarea>
+        <div class="modal-actions">
+          <button id="addCommentBtn" class="btn" type="button">Add Comment</button>
+          <div class="muted" id="commentHint"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script type="module">
     import { supabase } from "./supabase.js";
 
@@ -334,6 +411,16 @@
     const usersBody = document.getElementById("usersBody");
     const usersStatus = document.getElementById("usersStatus");
 
+    // Comments modal elements
+    const commentsOverlay = document.getElementById("commentsOverlay");
+    const commentsCloseBtn = document.getElementById("commentsCloseBtn");
+    const commentsStatus = document.getElementById("commentsStatus");
+    const commentsList = document.getElementById("commentsList");
+    const commentsSub = document.getElementById("commentsSub");
+    const commentText = document.getElementById("commentText");
+    const addCommentBtn = document.getElementById("addCommentBtn");
+    const commentHint = document.getElementById("commentHint");
+
     // Helpers
     function show(el){ el.classList.remove("hide"); }
     function hide(el){ el.classList.add("hide"); }
@@ -364,6 +451,173 @@
       if (window.location.hash !== hash) window.location.hash = hash;
     }
 
+    // ===== Comments helpers (robust column detection) =====
+    const COMMENT_FIELDS = ["comment", "body", "message", "content", "text"];
+    let activeTicketId = null;
+    let activeTicketSubject = "";
+    let activeTicketRequester = "";
+    let lastDetectedCommentField = "comment";
+
+    function showOverlay(){
+      commentsOverlay.classList.add("show");
+      commentsOverlay.setAttribute("aria-hidden", "false");
+    }
+    function hideOverlay(){
+      commentsOverlay.classList.remove("show");
+      commentsOverlay.setAttribute("aria-hidden", "true");
+    }
+
+    function getCommentTextFromRow(row){
+      for (const k of COMMENT_FIELDS) {
+        if (row && row[k] != null) return String(row[k]);
+      }
+      // fallback: first string-ish field that looks like a message
+      for (const [k,v] of Object.entries(row || {})) {
+        if (typeof v === "string" && v.length) return v;
+      }
+      return "";
+    }
+
+    function getAuthorFromRow(row){
+      return row?.author_email || row?.email || row?.created_by_email || row?.user_email || row?.commenter_email || row?.created_by || "";
+    }
+
+    function detectCommentFieldFromRow(row){
+      for (const k of COMMENT_FIELDS) {
+        if (row && Object.prototype.hasOwnProperty.call(row, k)) return k;
+      }
+      return "comment";
+    }
+
+    async function loadComments(ticketId){
+      clearStatus(commentsStatus);
+      commentsList.innerHTML = `<div class="muted">Loading comments…</div>`;
+
+      const { data, error } = await supabase
+        .from("ticket_comments")
+        .select("*")
+        .eq("ticket_id", ticketId)
+        .order("created_at", { ascending: true });
+
+      if (error) {
+        console.error(error);
+        setStatus(commentsStatus, "err", "❌ Could not load comments (check RLS).");
+        commentsList.innerHTML = `<div class="muted">No comments loaded.</div>`;
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        commentsList.innerHTML = `<div class="muted">No comments yet.</div>`;
+        return;
+      }
+
+      // detect field name from first row, if possible
+      lastDetectedCommentField = detectCommentFieldFromRow(data[0]);
+
+      commentsList.innerHTML = data.map(c => {
+        const body = escapeHtml(getCommentTextFromRow(c));
+        const who = escapeHtml(getAuthorFromRow(c)) || "—";
+        const when = c.created_at ? fmtDate(c.created_at) : "";
+        return `
+          <div class="comment-item">
+            <div class="comment-meta">${who} ${when ? "• " + escapeHtml(when) : ""}</div>
+            <div class="comment-body">${body || "<span class='muted'>(empty)</span>"}</div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    async function tryInsertComment(ticketId, text){
+      // Try known column names, starting with last detected.
+      const candidates = [lastDetectedCommentField, ...COMMENT_FIELDS.filter(x => x !== lastDetectedCommentField)];
+
+      for (const field of candidates) {
+        const payload = { ticket_id: ticketId };
+        payload[field] = text;
+
+        const { error } = await supabase
+          .from("ticket_comments")
+          .insert(payload);
+
+        if (!error) return { ok: true, fieldUsed: field };
+
+        const msg = String(error.message || "").toLowerCase();
+        // If column doesn't exist, try next. Otherwise stop.
+        if (msg.includes("column") && msg.includes("does not exist")) continue;
+
+        return { ok: false, error };
+      }
+
+      return { ok: false, error: new Error("No compatible comment column found. Add a text column like comment/body/message.") };
+    }
+
+    async function openComments(ticketId, subject, requesterEmail){
+      activeTicketId = ticketId;
+      activeTicketSubject = subject || "";
+      activeTicketRequester = requesterEmail || "";
+
+      commentsSub.textContent =
+        `Ticket: ${ticketId}${activeTicketSubject ? " • " + activeTicketSubject : ""}`;
+
+      commentText.value = "";
+      clearStatus(commentsStatus);
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) {
+        addCommentBtn.disabled = true;
+        commentHint.textContent = "Login required to add a comment.";
+      } else {
+        addCommentBtn.disabled = false;
+        commentHint.textContent = "";
+      }
+
+      showOverlay();
+      await loadComments(ticketId);
+    }
+
+    commentsCloseBtn.addEventListener("click", hideOverlay);
+    commentsOverlay.addEventListener("click", (e) => {
+      if (e.target === commentsOverlay) hideOverlay();
+    });
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && commentsOverlay.classList.contains("show")) hideOverlay();
+    });
+
+    addCommentBtn.addEventListener("click", async () => {
+      clearStatus(commentsStatus);
+
+      const text = (commentText.value || "").trim();
+      if (!text) {
+        setStatus(commentsStatus, "err", "❌ Type a comment first.");
+        return;
+      }
+      if (!activeTicketId) return;
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) {
+        setStatus(commentsStatus, "err", "❌ Please login first.");
+        return;
+      }
+
+      addCommentBtn.disabled = true;
+      setStatus(commentsStatus, "ok", "Saving comment…");
+
+      const res = await tryInsertComment(activeTicketId, text);
+
+      if (!res.ok) {
+        console.error(res.error);
+        setStatus(commentsStatus, "err",
+          "❌ Could not add comment. (Check ticket_comments schema + RLS)");
+      } else {
+        setStatus(commentsStatus, "ok", "✅ Comment added.");
+        commentText.value = "";
+        await loadComments(activeTicketId);
+        // optional: refresh tables if you later add comment counts
+      }
+
+      addCommentBtn.disabled = false;
+    });
+
     // State
     let currentUser = null;
     let currentRole = "user";  // user | manager | admin
@@ -391,7 +645,7 @@
     tabOrgs.addEventListener("click", () => activateAdminTab("orgs"));
     tabUsers.addEventListener("click", () => activateAdminTab("users"));
 
-    // Robust profile loader (filters by user id + fallback if is_active column missing)
+    // Robust profile loader
     async function loadProfile(userId){
       currentRole = "user";
       currentOrgId = null;
@@ -403,7 +657,7 @@
         .eq("id", userId)
         .single();
 
-      // If the schema doesn't have is_active yet, fallback to role/org_id only
+      // If schema doesn't have is_active, fallback
       if (res.error && String(res.error.message || "").toLowerCase().includes("is_active")) {
         res = await supabase
           .from("profiles")
@@ -419,7 +673,6 @@
         return;
       }
 
-      // Soft delete check only if column exists in response
       if (Object.prototype.hasOwnProperty.call(data, "is_active") && data.is_active === false) {
         alert("Your account has been deactivated. Please contact support.");
         await supabase.auth.signOut();
@@ -438,7 +691,7 @@
 
       const { data, error } = await supabase
         .from("tickets")
-        .select("id, created_at, subject, priority, status")
+        .select("id, created_at, subject, priority, status, requester_email")
         .order("created_at", { ascending: false });
 
       if (error) {
@@ -448,7 +701,7 @@
       }
 
       if (!data || data.length === 0) {
-        mineBody.innerHTML = `<tr><td colspan="5" class="muted">No tickets yet.</td></tr>`;
+        mineBody.innerHTML = `<tr><td colspan="6" class="muted">No tickets yet.</td></tr>`;
         return;
       }
 
@@ -459,133 +712,160 @@
           <td>${escapeHtml(t.priority)}</td>
           <td>${pill(t.status)}</td>
           <td class="mono">${t.id}</td>
+          <td>
+            <button class="btn secondary small" type="button"
+              data-comments="1"
+              data-ticket-id="${t.id}"
+              data-ticket-subject="${escapeHtml(t.subject)}"
+              data-ticket-email="${escapeHtml(t.requester_email || "")}">
+              💬 Comments
+            </button>
+          </td>
         </tr>
       `).join("");
+
+      bindCommentsButtons(mineBody);
     }
 
-async function loadManageTickets(){
-  clearStatus(manageStatus);
-  manageBody.innerHTML = "";
+    function bindCommentsButtons(root){
+      root.querySelectorAll("button[data-comments='1']").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const id = btn.getAttribute("data-ticket-id");
+          const subject = btn.getAttribute("data-ticket-subject") || "";
+          const email = btn.getAttribute("data-ticket-email") || "";
+          await openComments(id, subject, email);
+        });
+      });
+    }
 
-  const { data, error } = await supabase
-    .from("tickets")
-    .select("id, created_at, requester_email, subject, priority, status, hours_worked")
-    .order("created_at", { ascending: false });
+    async function loadManageTickets(){
+      clearStatus(manageStatus);
+      manageBody.innerHTML = "";
 
-  if (error) {
-    console.error(error);
-    setStatus(manageStatus, "err", "❌ Could not load manage tickets (check RLS role/org).");
-    return;
-  }
-
-  if (!data || data.length === 0) {
-    manageBody.innerHTML = `<tr><td colspan="6" class="muted">No tickets available for your role.</td></tr>`;
-    return;
-  }
-
-  // Add an extra column for admin only
-  const showHours = (currentRole === "admin");
-
-  // Update table header dynamically (if you want it to show a dedicated column)
-  // If you prefer to keep ONE column ("Status (change)") and place hours next to it,
-  // we’ll render both controls inside the same cell (this is what we do below).
-
-  manageBody.innerHTML = data.map(t => {
-    const hoursVal = (t.hours_worked ?? 0);
-    return `
-      <tr>
-        <td>${fmtDate(t.created_at)}</td>
-        <td>${escapeHtml(t.requester_email || "")}</td>
-        <td>${escapeHtml(t.subject)}</td>
-        <td>${escapeHtml(t.priority)}</td>
-
-        <td>
-          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-            <select data-id="${t.id}" data-field="status">
-              <option value="open" ${t.status==="open"?"selected":""}>open</option>
-              <option value="working" ${t.status==="working"?"selected":""}>working</option>
-              <option value="complete" ${t.status==="complete"?"selected":""}>complete</option>
-            </select>
-
-            ${showHours ? `
-              <input
-                data-id="${t.id}"
-                data-field="hours"
-                type="number"
-                min="0"
-                step="0.25"
-                style="max-width:120px"
-                value="${hoursVal}"
-                title="Hours worked"
-              />
-              <button class="btn secondary" type="button" data-save="${t.id}">Save</button>
-            ` : ``}
-          </div>
-        </td>
-
-        <td class="mono">${t.id}</td>
-      </tr>
-    `;
-  }).join("");
-
-  // Status change handler (manager/admin)
-  manageBody.querySelectorAll('select[data-field="status"][data-id]').forEach(sel => {
-    sel.addEventListener("change", async () => {
-      const id = sel.getAttribute("data-id");
-      const status = sel.value;
-
-      setStatus(manageStatus, "ok", "Updating status…");
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("tickets")
-        .update({ status })
-        .eq("id", id);
+        .select("id, created_at, requester_email, subject, priority, status, hours_worked")
+        .order("created_at", { ascending: false });
 
       if (error) {
         console.error(error);
-        setStatus(manageStatus, "err", "❌ Status update failed (check RLS role/org).");
-      } else {
-        setStatus(manageStatus, "ok", "✅ Status updated.");
+        setStatus(manageStatus, "err", "❌ Could not load manage tickets (check RLS role/org).");
+        return;
       }
-    });
-  });
 
-  // Hours save handler (admin only)
-  if (currentRole === "admin") {
-    manageBody.querySelectorAll('button[data-save]').forEach(btn => {
-      btn.addEventListener("click", async () => {
-        const id = btn.getAttribute("data-save");
-        const statusSel = manageBody.querySelector(`select[data-field="status"][data-id="${id}"]`);
-        const hoursInput = manageBody.querySelector(`input[data-field="hours"][data-id="${id}"]`);
+      if (!data || data.length === 0) {
+        manageBody.innerHTML = `<tr><td colspan="7" class="muted">No tickets available for your role.</td></tr>`;
+        return;
+      }
 
-        const status = statusSel?.value || "open";
-        const hours = Number(hoursInput?.value ?? 0);
+      const showHours = (currentRole === "admin");
 
-        if (!Number.isFinite(hours) || hours < 0) {
-          setStatus(manageStatus, "err", "❌ Hours must be 0 or more.");
-          return;
-        }
+      manageBody.innerHTML = data.map(t => {
+        const hoursVal = (t.hours_worked ?? 0);
+        return `
+          <tr>
+            <td>${fmtDate(t.created_at)}</td>
+            <td>${escapeHtml(t.requester_email || "")}</td>
+            <td>${escapeHtml(t.subject)}</td>
+            <td>${escapeHtml(t.priority)}</td>
 
-        setStatus(manageStatus, "ok", "Saving…");
-        const { error } = await supabase
-          .from("tickets")
-          .update({ status, hours_worked: hours })
-          .eq("id", id);
+            <td>
+              <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                <select data-id="${t.id}" data-field="status">
+                  <option value="open" ${t.status==="open"?"selected":""}>open</option>
+                  <option value="working" ${t.status==="working"?"selected":""}>working</option>
+                  <option value="complete" ${t.status==="complete"?"selected":""}>complete</option>
+                </select>
 
-        if (error) {
-          console.error(error);
-          setStatus(manageStatus, "err", "❌ Save failed (check RLS policies for admin update).");
-        } else {
-          setStatus(manageStatus, "ok", "✅ Saved status + hours.");
-          await loadManageTickets();
-        }
+                ${showHours ? `
+                  <input
+                    data-id="${t.id}"
+                    data-field="hours"
+                    type="number"
+                    min="0"
+                    step="0.25"
+                    style="max-width:120px"
+                    value="${hoursVal}"
+                    title="Hours worked"
+                  />
+                  <button class="btn secondary small" type="button" data-save="${t.id}">Save</button>
+                ` : ``}
+              </div>
+            </td>
+
+            <td class="mono">${t.id}</td>
+
+            <td>
+              <button class="btn secondary small" type="button"
+                data-comments="1"
+                data-ticket-id="${t.id}"
+                data-ticket-subject="${escapeHtml(t.subject)}"
+                data-ticket-email="${escapeHtml(t.requester_email || "")}">
+                💬 Comments
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join("");
+
+      // Status change handler
+      manageBody.querySelectorAll('select[data-field="status"][data-id]').forEach(sel => {
+        sel.addEventListener("change", async () => {
+          const id = sel.getAttribute("data-id");
+          const status = sel.value;
+
+          setStatus(manageStatus, "ok", "Updating status…");
+          const { error } = await supabase
+            .from("tickets")
+            .update({ status })
+            .eq("id", id);
+
+          if (error) {
+            console.error(error);
+            setStatus(manageStatus, "err", "❌ Status update failed (check RLS role/org).");
+          } else {
+            setStatus(manageStatus, "ok", "✅ Status updated.");
+          }
+        });
       });
-    });
-  }
-}
 
+      // Hours save handler (admin only)
+      if (currentRole === "admin") {
+        manageBody.querySelectorAll('button[data-save]').forEach(btn => {
+          btn.addEventListener("click", async () => {
+            const id = btn.getAttribute("data-save");
+            const statusSel = manageBody.querySelector(`select[data-field="status"][data-id="${id}"]`);
+            const hoursInput = manageBody.querySelector(`input[data-field="hours"][data-id="${id}"]`);
+
+            const status = statusSel?.value || "open";
+            const hours = Number(hoursInput?.value ?? 0);
+
+            if (!Number.isFinite(hours) || hours < 0) {
+              setStatus(manageStatus, "err", "❌ Hours must be 0 or more.");
+              return;
+            }
+
+            setStatus(manageStatus, "ok", "Saving…");
+            const { error } = await supabase
+              .from("tickets")
+              .update({ status, hours_worked: hours })
+              .eq("id", id);
+
+            if (error) {
+              console.error(error);
+              setStatus(manageStatus, "err", "❌ Save failed (check RLS policies for admin update).");
+            } else {
+              setStatus(manageStatus, "ok", "✅ Saved status + hours.");
+              await loadManageTickets();
+            }
+          });
+        });
+      }
+
+      bindCommentsButtons(manageBody);
+    }
 
     // ===== ADMIN MAINTENANCE =====
-
     async function loadOrganizations(){
       clearStatus(orgStatus);
       const { data, error } = await supabase
@@ -611,8 +891,8 @@ async function loadManageTickets(){
           <td>${escapeHtml(o.name)}</td>
           <td class="mono">${o.id}</td>
           <td class="actions">
-            <button class="btn secondary" data-rename="${o.id}" type="button">Rename</button>
-            <button class="btn danger" data-delete="${o.id}" type="button">Delete</button>
+            <button class="btn secondary small" data-rename="${o.id}" type="button">Rename</button>
+            <button class="btn danger small" data-delete="${o.id}" type="button">Delete</button>
           </td>
         </tr>
       `).join("") || `<tr><td colspan="3" class="muted">No organizations yet.</td></tr>`;
@@ -733,15 +1013,14 @@ async function loadManageTickets(){
             </select>
           </td>
           <td class="actions">
-            <button class="btn secondary" data-save="${p.id}" type="button">Save</button>
-            <button class="btn danger" data-toggle="${p.id}" type="button">
+            <button class="btn secondary small" data-save="${p.id}" type="button">Save</button>
+            <button class="btn danger small" data-toggle="${p.id}" type="button">
               ${p.is_active ? "Deactivate" : "Reactivate"}
             </button>
           </td>
         </tr>
       `).join("") || `<tr><td colspan="5" class="muted">No profiles found.</td></tr>`;
 
-      // Save handler
       usersBody.querySelectorAll("button[data-save]").forEach(btn => {
         btn.addEventListener("click", async () => {
           const id = btn.getAttribute("data-save");
@@ -764,7 +1043,6 @@ async function loadManageTickets(){
         });
       });
 
-      // Deactivate/reactivate
       usersBody.querySelectorAll("button[data-toggle]").forEach(btn => {
         btn.addEventListener("click", async () => {
           const id = btn.getAttribute("data-toggle");
@@ -818,26 +1096,21 @@ async function loadManageTickets(){
       currentUser = session.user;
       await loadProfile(session.user.id);
 
-      // Show admin link only for admins
       if (currentRole === "admin") show(adminLink);
       else hide(adminLink);
 
-      // If non-admin tries to access #admin, bounce them back
       const wantsAdminView = window.location.hash === "#admin";
       if (wantsAdminView && currentRole !== "admin") {
         goToHash("#");
         setStatus(mineStatus, "err", "❌ Admin access required.");
       }
 
-      // Badge
       roleBadge.textContent = `Role: ${String(currentRole || "user").toUpperCase()}`;
 
-      // Show portal
       hide(authCard);
       show(portal);
       show(logoutBtn);
 
-      // Manager/admin ticket panel
       if (currentRole === "manager") {
         show(manageCard);
         manageTitle.textContent = "Team Tickets";
@@ -850,7 +1123,6 @@ async function loadManageTickets(){
         hide(manageCard);
       }
 
-      // Admin maintenance panel (admins only + only when #admin)
       const wantsAdminView2 = window.location.hash === "#admin";
       if (currentRole === "admin" && wantsAdminView2) {
         show(adminMaintenance);
@@ -861,7 +1133,6 @@ async function loadManageTickets(){
         hide(adminMaintenance);
       }
 
-      // Load ticket tables
       await loadMyTickets();
       if (currentRole === "manager" || currentRole === "admin") {
         await loadManageTickets();
@@ -872,12 +1143,10 @@ async function loadManageTickets(){
     const { data: { session } } = await supabase.auth.getSession();
     await setUiForSession(session);
 
-    // Auth events
     supabase.auth.onAuthStateChange(async (_event, newSession) => {
       await setUiForSession(newSession);
     });
 
-    // ✅ Hash route changes (so switching works instantly)
     window.addEventListener("hashchange", async () => {
       const { data: { session } } = await supabase.auth.getSession();
       await setUiForSession(session);
@@ -902,13 +1171,9 @@ async function loadManageTickets(){
     }
 
     loginBtn.addEventListener("click", doLogin);
-
-    // Enter key triggers login
-    [emailEl, passEl].forEach(el => {
-      el.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") doLogin();
-      });
-    });
+    [emailEl, passEl].forEach(el => el.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") doLogin();
+    }));
 
     // Signup
     signupBtn.addEventListener("click", async () => {
@@ -979,7 +1244,7 @@ async function loadManageTickets(){
         priority: document.getElementById("priority").value,
         subject: document.getElementById("subject").value.trim(),
         description: document.getElementById("desc").value.trim(),
-        status: "open",       // lowercase
+        status: "open",
         org_id: currentOrgId
       };
 
