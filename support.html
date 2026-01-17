@@ -37,15 +37,7 @@
     .btn.secondary{
       background:transparent;border:1px solid rgba(255,255,255,.16);color:var(--text);font-weight:650
     }
-    .btn.danger{
-      background:transparent;
-      border:1px solid rgba(255,106,26,.45);
-      color:var(--text);
-      font-weight:750;
-    }
-    .btn.danger:hover{
-      background: rgba(255,106,26,.10);
-    }
+    .btn.danger:hover{ background: rgba(255,106,26,.10); }
     .btn:disabled{opacity:.65;cursor:not-allowed}
     .actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
     .status{margin-top:12px;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.03);display:none}
@@ -95,11 +87,11 @@
       <div class="row">
         <div>
           <label for="authEmail">Email</label>
-          <input id="authEmail" type="email" placeholder="you@company.com" />
+          <input id="authEmail" type="email" placeholder="you@company.com" autocomplete="email" />
         </div>
         <div>
           <label for="authPass">Password</label>
-          <input id="authPass" type="password" placeholder="••••••••" />
+          <input id="authPass" type="password" placeholder="••••••••" autocomplete="current-password" />
         </div>
       </div>
       <div class="actions" style="margin-top:10px">
@@ -263,10 +255,8 @@
         <!-- Users panel -->
         <div id="panelUsers" class="hide">
           <div class="actions" style="justify-content:space-between;align-items:flex-end">
-            <div>
-              <div class="muted">
-                Users show as UUIDs from <b>profiles</b>. Users must sign up on this page first.
-              </div>
+            <div class="muted">
+              Users show as UUIDs from <b>profiles</b>. Users must sign up on this page first.
             </div>
             <button id="refreshUsersBtn" class="btn secondary" type="button">Refresh</button>
           </div>
@@ -347,9 +337,6 @@
     // Helpers
     function show(el){ el.classList.remove("hide"); }
     function hide(el){ el.classList.add("hide"); }
-    function goToHash(hash){
-      if (window.location.hash !== hash) window.location.hash = hash;
-    }
 
     function setStatus(el, type, msg){
       el.className = "status " + type; // ok | err
@@ -371,6 +358,10 @@
     function pill(status){
       const s = status || "open";
       return `<span class="pill ${s}">${s.charAt(0).toUpperCase() + s.slice(1)}</span>`;
+    }
+
+    function goToHash(hash){
+      if (window.location.hash !== hash) window.location.hash = hash;
     }
 
     // State
@@ -400,24 +391,38 @@
     tabOrgs.addEventListener("click", () => activateAdminTab("orgs"));
     tabUsers.addEventListener("click", () => activateAdminTab("users"));
 
-    async function loadProfile(){
-      const { data, error } = await supabase
+    // Robust profile loader (filters by user id + fallback if is_active column missing)
+    async function loadProfile(userId){
+      currentRole = "user";
+      currentOrgId = null;
+
+      // 1) Try with is_active
+      let res = await supabase
         .from("profiles")
         .select("role, org_id, is_active")
+        .eq("id", userId)
         .single();
 
+      // If the schema doesn't have is_active yet, fallback to role/org_id only
+      if (res.error && String(res.error.message || "").toLowerCase().includes("is_active")) {
+        res = await supabase
+          .from("profiles")
+          .select("role, org_id")
+          .eq("id", userId)
+          .single();
+      }
+
+      const { data, error } = res;
+
       if (error) {
-        console.error(error);
-        currentRole = "user";
-        currentOrgId = null;
+        console.error("loadProfile error:", error);
         return;
       }
 
-      // 🔒 SOFT DELETE CHECK
-      if (data.is_active === false) {
+      // Soft delete check only if column exists in response
+      if (Object.prototype.hasOwnProperty.call(data, "is_active") && data.is_active === false) {
         alert("Your account has been deactivated. Please contact support.");
         await supabase.auth.signOut();
-
         currentRole = "user";
         currentOrgId = null;
         return;
@@ -498,7 +503,7 @@
       manageBody.querySelectorAll("select[data-id]").forEach(sel => {
         sel.addEventListener("change", async () => {
           const id = sel.getAttribute("data-id");
-          const status = sel.value;
+          const status = sel.value; // must be lowercase to pass constraint
 
           setStatus(manageStatus, "ok", "Updating…");
           const { error } = await supabase
@@ -619,10 +624,6 @@
     });
 
     refreshOrgsBtn.addEventListener("click", loadOrganizations);
-    refreshUsersBtn.addEventListener("click", async () => {
-      await loadOrganizations();
-      await loadUsers();
-    });
 
     async function loadUsers(){
       clearStatus(usersStatus);
@@ -700,12 +701,11 @@
         });
       });
 
-      // Soft delete / reactivate handler
+      // Deactivate/reactivate
       usersBody.querySelectorAll("button[data-toggle]").forEach(btn => {
         btn.addEventListener("click", async () => {
           const id = btn.getAttribute("data-toggle");
 
-          // prevent self-deactivate
           const { data: { session } } = await supabase.auth.getSession();
           if (session?.user?.id === id) {
             alert("You cannot deactivate your own account from here.");
@@ -716,9 +716,11 @@
           if (!userRow) return;
 
           const nextActive = !userRow.is_active;
+
           if (!confirm(`${nextActive ? "Reactivate" : "Deactivate"} this user?`)) return;
 
           setStatus(usersStatus, "ok", "Saving…");
+
           const { error } = await supabase
             .from("profiles")
             .update({ is_active: nextActive })
@@ -735,38 +737,37 @@
       });
     }
 
-    // ===== UI State =====
+    // ===== UI State + Route Guard =====
     async function setUiForSession(session){
+      clearStatus(authStatus);
+
       if (!session?.user) {
         currentUser = null;
+
         hide(portal);
         show(authCard);
         hide(logoutBtn);
-        if (adminLink) hide(adminLink);
-        if (adminMaintenance) hide(adminMaintenance);
+        hide(adminLink);
+        hide(adminMaintenance);
         return;
       }
 
       currentUser = session.user;
-      await loadProfile();
-
-      // --- Admin route guard (#admin)
-      const wantsAdminView = window.location.hash === "#admin";
+      await loadProfile(session.user.id);
 
       // Show admin link only for admins
-      if (adminLink) {
-        if (currentRole === "admin") show(adminLink);
-        else hide(adminLink);
-      }
+      if (currentRole === "admin") show(adminLink);
+      else hide(adminLink);
 
       // If non-admin tries to access #admin, bounce them back
+      const wantsAdminView = window.location.hash === "#admin";
       if (wantsAdminView && currentRole !== "admin") {
         goToHash("#");
         setStatus(mineStatus, "err", "❌ Admin access required.");
       }
 
       // Badge
-      roleBadge.textContent = `Role: ${currentRole.toUpperCase()}`;
+      roleBadge.textContent = `Role: ${String(currentRole || "user").toUpperCase()}`;
 
       // Show portal
       hide(authCard);
@@ -787,15 +788,14 @@
       }
 
       // Admin maintenance panel (admins only + only when #admin)
-      if (adminMaintenance) {
-        if (currentRole === "admin" && window.location.hash === "#admin") {
-          show(adminMaintenance);
-          activateAdminTab("orgs");
-          await loadOrganizations();
-          await loadUsers();
-        } else {
-          hide(adminMaintenance);
-        }
+      const wantsAdminView2 = window.location.hash === "#admin";
+      if (currentRole === "admin" && wantsAdminView2) {
+        show(adminMaintenance);
+        activateAdminTab("orgs");
+        await loadOrganizations();
+        await loadUsers();
+      } else {
+        hide(adminMaintenance);
       }
 
       // Load ticket tables
@@ -814,21 +814,37 @@
       await setUiForSession(newSession);
     });
 
-    // Hash route changes (ex: #admin)
+    // ✅ Hash route changes (so switching works instantly)
     window.addEventListener("hashchange", async () => {
       const { data: { session } } = await supabase.auth.getSession();
       await setUiForSession(session);
     });
 
     // Login
-    loginBtn.addEventListener("click", async () => {
+    async function doLogin(){
       clearStatus(authStatus);
       const email = emailEl.value.trim();
       const password = passEl.value.trim();
 
+      if (!email || !password) {
+        setStatus(authStatus, "err", "❌ Enter email + password.");
+        return;
+      }
+
+      setStatus(authStatus, "ok", "Logging in…");
       const { error } = await supabase.auth.signInWithPassword({ email, password });
+
       if (error) setStatus(authStatus, "err", "❌ " + error.message);
       else setStatus(authStatus, "ok", "✅ Logged in.");
+    }
+
+    loginBtn.addEventListener("click", doLogin);
+
+    // Enter key triggers login
+    [emailEl, passEl].forEach(el => {
+      el.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") doLogin();
+      });
     });
 
     // Signup
@@ -900,7 +916,7 @@
         priority: document.getElementById("priority").value,
         subject: document.getElementById("subject").value.trim(),
         description: document.getElementById("desc").value.trim(),
-        status: "open",
+        status: "open",       // lowercase
         org_id: currentOrgId
       };
 
@@ -930,6 +946,7 @@
     // Refresh buttons
     refreshMineBtn.addEventListener("click", loadMyTickets);
     refreshManageBtn.addEventListener("click", loadManageTickets);
+    refreshUsersBtn.addEventListener("click", loadUsers);
   </script>
 </body>
 </html>
