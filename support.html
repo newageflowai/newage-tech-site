@@ -463,63 +463,126 @@
       `).join("");
     }
 
-    async function loadManageTickets(){
-      clearStatus(manageStatus);
-      manageBody.innerHTML = "";
+async function loadManageTickets(){
+  clearStatus(manageStatus);
+  manageBody.innerHTML = "";
 
-      const { data, error } = await supabase
-        .from("tickets")
-        .select("id, created_at, requester_email, subject, priority, status")
-        .order("created_at", { ascending: false });
+  const { data, error } = await supabase
+    .from("tickets")
+    .select("id, created_at, requester_email, subject, priority, status, hours_worked")
+    .order("created_at", { ascending: false });
 
-      if (error) {
-        console.error(error);
-        setStatus(manageStatus, "err", "❌ Could not load manage tickets (check RLS role/org).");
-        return;
-      }
+  if (error) {
+    console.error(error);
+    setStatus(manageStatus, "err", "❌ Could not load manage tickets (check RLS role/org).");
+    return;
+  }
 
-      if (!data || data.length === 0) {
-        manageBody.innerHTML = `<tr><td colspan="6" class="muted">No tickets available for your role.</td></tr>`;
-        return;
-      }
+  if (!data || data.length === 0) {
+    manageBody.innerHTML = `<tr><td colspan="6" class="muted">No tickets available for your role.</td></tr>`;
+    return;
+  }
 
-      manageBody.innerHTML = data.map(t => `
-        <tr>
-          <td>${fmtDate(t.created_at)}</td>
-          <td>${escapeHtml(t.requester_email || "")}</td>
-          <td>${escapeHtml(t.subject)}</td>
-          <td>${escapeHtml(t.priority)}</td>
-          <td>
-            <select data-id="${t.id}">
+  // Add an extra column for admin only
+  const showHours = (currentRole === "admin");
+
+  // Update table header dynamically (if you want it to show a dedicated column)
+  // If you prefer to keep ONE column ("Status (change)") and place hours next to it,
+  // we’ll render both controls inside the same cell (this is what we do below).
+
+  manageBody.innerHTML = data.map(t => {
+    const hoursVal = (t.hours_worked ?? 0);
+    return `
+      <tr>
+        <td>${fmtDate(t.created_at)}</td>
+        <td>${escapeHtml(t.requester_email || "")}</td>
+        <td>${escapeHtml(t.subject)}</td>
+        <td>${escapeHtml(t.priority)}</td>
+
+        <td>
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            <select data-id="${t.id}" data-field="status">
               <option value="open" ${t.status==="open"?"selected":""}>open</option>
               <option value="working" ${t.status==="working"?"selected":""}>working</option>
               <option value="complete" ${t.status==="complete"?"selected":""}>complete</option>
             </select>
-          </td>
-          <td class="mono">${t.id}</td>
-        </tr>
-      `).join("");
 
-      manageBody.querySelectorAll("select[data-id]").forEach(sel => {
-        sel.addEventListener("change", async () => {
-          const id = sel.getAttribute("data-id");
-          const status = sel.value; // must be lowercase to pass constraint
+            ${showHours ? `
+              <input
+                data-id="${t.id}"
+                data-field="hours"
+                type="number"
+                min="0"
+                step="0.25"
+                style="max-width:120px"
+                value="${hoursVal}"
+                title="Hours worked"
+              />
+              <button class="btn secondary" type="button" data-save="${t.id}">Save</button>
+            ` : ``}
+          </div>
+        </td>
 
-          setStatus(manageStatus, "ok", "Updating…");
-          const { error } = await supabase
-            .from("tickets")
-            .update({ status })
-            .eq("id", id);
+        <td class="mono">${t.id}</td>
+      </tr>
+    `;
+  }).join("");
 
-          if (error) {
-            console.error(error);
-            setStatus(manageStatus, "err", "❌ Update failed (check RLS role/org).");
-          } else {
-            setStatus(manageStatus, "ok", "✅ Status updated.");
-          }
-        });
+  // Status change handler (manager/admin)
+  manageBody.querySelectorAll('select[data-field="status"][data-id]').forEach(sel => {
+    sel.addEventListener("change", async () => {
+      const id = sel.getAttribute("data-id");
+      const status = sel.value;
+
+      setStatus(manageStatus, "ok", "Updating status…");
+      const { error } = await supabase
+        .from("tickets")
+        .update({ status })
+        .eq("id", id);
+
+      if (error) {
+        console.error(error);
+        setStatus(manageStatus, "err", "❌ Status update failed (check RLS role/org).");
+      } else {
+        setStatus(manageStatus, "ok", "✅ Status updated.");
+      }
+    });
+  });
+
+  // Hours save handler (admin only)
+  if (currentRole === "admin") {
+    manageBody.querySelectorAll('button[data-save]').forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const id = btn.getAttribute("data-save");
+        const statusSel = manageBody.querySelector(`select[data-field="status"][data-id="${id}"]`);
+        const hoursInput = manageBody.querySelector(`input[data-field="hours"][data-id="${id}"]`);
+
+        const status = statusSel?.value || "open";
+        const hours = Number(hoursInput?.value ?? 0);
+
+        if (!Number.isFinite(hours) || hours < 0) {
+          setStatus(manageStatus, "err", "❌ Hours must be 0 or more.");
+          return;
+        }
+
+        setStatus(manageStatus, "ok", "Saving…");
+        const { error } = await supabase
+          .from("tickets")
+          .update({ status, hours_worked: hours })
+          .eq("id", id);
+
+        if (error) {
+          console.error(error);
+          setStatus(manageStatus, "err", "❌ Save failed (check RLS policies for admin update).");
+        } else {
+          setStatus(manageStatus, "ok", "✅ Saved status + hours.");
+          await loadManageTickets();
+        }
       });
-    }
+    });
+  }
+}
+
 
     // ===== ADMIN MAINTENANCE =====
 
