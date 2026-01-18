@@ -343,17 +343,16 @@
       </div>
 
       <div style="margin-top:12px">
-      <label for="newCommentText">Add a comment</label>
-      <textarea id="newCommentText" placeholder="Type your comment…"></textarea>
+        <label for="newCommentText">Add a comment</label>
+        <textarea id="newCommentText" placeholder="Type your comment…"></textarea>
 
-      <label for="commentFiles">Attachments (optional)</label>
-      <input id="commentFiles" type="file" multiple />
+        <label for="commentFiles">Attachments (optional)</label>
+        <input id="commentFiles" type="file" multiple />
 
-<div class="actions" style="margin-top:10px">
-  <button id="addCommentBtn" class="btn" type="button">Add Comment</button>
-  <button id="refreshCommentsBtn" class="btn secondary" type="button">Refresh</button>
-</div>
-
+        <div class="actions" style="margin-top:10px">
+          <button id="addCommentBtn" class="btn" type="button">Add Comment</button>
+          <button id="refreshCommentsBtn" class="btn secondary" type="button">Refresh</button>
+        </div>
       </div>
     </div>
   </div>
@@ -421,7 +420,6 @@
     const refreshCommentsBtn = document.getElementById("refreshCommentsBtn");
     const commentFiles = document.getElementById("commentFiles");
 
-
     // Helpers
     function show(el){ el.classList.remove("hide"); }
     function hide(el){ el.classList.add("hide"); }
@@ -463,8 +461,9 @@
     // Comments modal state
     let activeTicketId = null;
     let activeTicketSubject = null;
-    const ATTACH_BUCKET = "ticket-attachments";
 
+    // Storage bucket name
+    const ATTACH_BUCKET = "ticket-attachments";
 
     // Tabs
     function activateAdminTab(which){
@@ -531,68 +530,22 @@
       activeTicketSubject = subject || "";
       commentsTicketLine.textContent = `Ticket: ${ticketId}${subject ? " • " + subject : ""}`;
       newCommentText.value = "";
+      if (commentFiles) commentFiles.value = "";
       clearStatus(commentsStatus);
       show(commentsOverlay);
       commentsOverlay.setAttribute("aria-hidden", "false");
       loadComments(ticketId);
     }
 
-    function safeFileName(name){
-  // keep it readable, remove weird chars
-  return String(name || "file")
-    .replace(/[^a-zA-Z0-9.\-_ ]+/g, "_")
-    .replace(/\s+/g, "_")
-    .slice(0, 120);
-}
-
-async function uploadOneAttachment({ ticketId, commentId, file, userId }){
-  const fileName = safeFileName(file.name);
-  const ext = (fileName.split(".").pop() || "").toLowerCase();
-  const stamp = new Date().toISOString().replace(/[:.]/g, "-");
-
-  // path format: ticketId/commentId/userId_timestamp_filename
-  const storagePath = `${ticketId}/${commentId}/${userId}_${stamp}_${fileName}`;
-
-  // Upload to storage (bucket must exist)
-  const { error: upErr } = await supabase.storage
-    .from(ATTACH_BUCKET)
-    .upload(storagePath, file, {
-      cacheControl: "3600",
-      upsert: false,
-      contentType: file.type || "application/octet-stream",
-    });
-
-  if (upErr) throw upErr;
-
-  // Insert metadata row into DB table
-  const row = {
-    ticket_id: ticketId,
-    comment_id: commentId,
-    storage_path: storagePath,
-    file_name: fileName,
-    mime_type: file.type || null,
-    file_size: file.size || null,
-    created_by: userId,
-  };
-
-  const { error: insErr } = await supabase
-    .from("ticket_comment_attachments")
-    .insert(row);
-
-  if (insErr) throw insErr;
-
-  return row;
-}
-
-
     function closeCommentsModal(){
       hide(commentsOverlay);
-      commentsOverlay.setAttribute("aria-hidden", "true");V
+      commentsOverlay.setAttribute("aria-hidden", "true");
       activeTicketId = null;
       activeTicketSubject = null;
       commentsList.innerHTML = `<div class="muted">—</div>`;
       clearStatus(commentsStatus);
       newCommentText.value = "";
+      if (commentFiles) commentFiles.value = "";
     }
 
     closeCommentsBtn.addEventListener("click", closeCommentsModal);
@@ -602,192 +555,217 @@ async function uploadOneAttachment({ ticketId, commentId, file, userId }){
     window.addEventListener("keydown", (e) => {
       if (e.key === "Escape" && !commentsOverlay.classList.contains("hide")) closeCommentsModal();
     });
-    
-async function loadComments(ticketId){
-  clearStatus(commentsStatus);
-  commentsList.innerHTML = `<div class="muted">Loading…</div>`;
 
-  const { data: comments, error: cErr } = await supabase
-    .from("ticket_comments")
-    .select("id, created_at, author_email, comment")
-    .eq("ticket_id", ticketId)
-    .order("created_at", { ascending: true });
-
-  if (cErr) {
-    console.error("loadComments error:", cErr);
-    commentsList.innerHTML = `<div class="muted">Could not load comments.</div>`;
-    setStatus(commentsStatus, "err", "❌ " + cErr.message);
-    return;
-  }
-
-addCommentBtn.addEventListener("click", async () => {
-  clearStatus(commentsStatus);
-
-  const ticketId = activeTicketId;
-  const text = (newCommentText.value || "").trim();
-  const files = Array.from(commentFiles?.files || []);
-
-  if (!ticketId) {
-    setStatus(commentsStatus, "err", "❌ No active ticket.");
-    return;
-  }
-  if (!text && files.length === 0) {
-    setStatus(commentsStatus, "err", "❌ Type a comment or attach a file.");
-    return;
-  }
-
-  const { data: { session } } = await supabase.auth.getSession();
-  const user = session?.user;
-  if (!user) {
-    setStatus(commentsStatus, "err", "❌ Please login first.");
-    return;
-  }
-
-  // Optional: limit total files / size
-  const MAX_FILES = 5;
-  const MAX_MB_EACH = 10;
-  if (files.length > MAX_FILES) {
-    setStatus(commentsStatus, "err", `❌ Max ${MAX_FILES} files per comment.`);
-    return;
-  }
-  for (const f of files) {
-    if (f.size > MAX_MB_EACH * 1024 * 1024) {
-      setStatus(commentsStatus, "err", `❌ "${f.name}" is too large (max ${MAX_MB_EACH}MB).`);
-      return;
+    function safeFileName(name){
+      return String(name || "file")
+        .replace(/[^a-zA-Z0-9.\-_ ]+/g, "_")
+        .replace(/\s+/g, "_")
+        .slice(0, 120);
     }
-  }
 
-  try {
-    addCommentBtn.disabled = true;
-    setStatus(commentsStatus, "ok", "Saving comment…");
+    async function uploadOneAttachment({ ticketId, commentId, file, user }){
+      const fileName = safeFileName(file.name);
+      const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+      const storagePath = `${ticketId}/${commentId}/${user.id}_${stamp}_${fileName}`;
 
-    // 1) Insert comment row first (we need comment_id)
-    const { data: cRow, error: cErr } = await supabase
-      .from("ticket_comments")
-      .insert({
-        ticket_id: ticketId,
-        author_id: user.id,
-        author_email: user.email,
-        comment: text || "(attachment)",
-      })
-      .select("id")
-      .single();
-
-    if (cErr) throw cErr;
-
-    const commentId = cRow.id;
-
-    // 2) Upload attachments + insert attachment rows
-    if (files.length > 0) {
-      setStatus(commentsStatus, "ok", `Uploading ${files.length} file(s)…`);
-      for (const file of files) {
-        await uploadOneAttachment({
-          ticketId,
-          commentId,
-          file,
-          userId: user.id,
+      const { error: upErr } = await supabase.storage
+        .from(ATTACH_BUCKET)
+        .upload(storagePath, file, {
+          cacheControl: "3600",
+          upsert: false,
+          contentType: file.type || "application/octet-stream",
         });
-      }
+
+      if (upErr) throw upErr;
+
+      // IMPORTANT: your table has uploader_id (NOT NULL) + uploader_email
+      const row = {
+        ticket_id: ticketId,
+        comment_id: commentId,
+        uploader_id: user.id,
+        uploader_email: user.email || null,
+        storage_path: storagePath,
+        file_name: fileName,
+        mime_type: file.type || null,
+        file_size: file.size || null,
+        created_by: user.id,
+      };
+
+      const { error: insErr } = await supabase
+        .from("ticket_comment_attachments")
+        .insert(row);
+
+      if (insErr) throw insErr;
+
+      return row;
     }
 
-    // 3) Done -> reset UI + reload
-    newCommentText.value = "";
-    if (commentFiles) commentFiles.value = ""; // clear file picker
-    setStatus(commentsStatus, "ok", "✅ Comment added.");
-    await loadComments(ticketId);
+    async function loadComments(ticketId){
+      clearStatus(commentsStatus);
+      commentsList.innerHTML = `<div class="muted">Loading…</div>`;
 
-  } catch (err) {
-    console.error("addComment error:", err);
-    setStatus(commentsStatus, "err", "❌ Could not add comment: " + (err?.message || "Check RLS/Storage policies."));
-  } finally {
-    addCommentBtn.disabled = false;
-  }
-});
+      const { data: comments, error: cErr } = await supabase
+        .from("ticket_comments")
+        .select("id, created_at, author_email, comment")
+        .eq("ticket_id", ticketId)
+        .order("created_at", { ascending: true });
 
-refreshCommentsBtn.addEventListener("click", () => {
-  if (activeTicketId) loadComments(activeTicketId);
-});
-
-  
-  // Pull all attachments for this ticket (we’ll group by comment_id)
-  const { data: atts, error: aErr } = await supabase
-    .from("ticket_comment_attachments")
-    .select("id, comment_id, file_name, mime_type, file_size, storage_path, created_at")
-    .eq("ticket_id", ticketId)
-    .order("created_at", { ascending: true });
-
-  if (aErr) {
-    console.error("loadAttachments error:", aErr);
-    // not fatal; show comments anyway
-  }
-
-  const byComment = new Map();
-  (atts || []).forEach(a => {
-    if (!byComment.has(a.comment_id)) byComment.set(a.comment_id, []);
-    byComment.get(a.comment_id).push(a);
-  });
-
-  if (!comments || comments.length === 0) {
-    commentsList.innerHTML = `<div class="muted">No comments yet.</div>`;
-    return;
-  }
-
-  // helper to create a downloadable link (public read policy will allow direct getPublicUrl, but bucket is private, so use signed url)
-  async function makeSignedUrl(path){
-    const { data, error } = await supabase.storage
-      .from("ticket-attachments")
-      .createSignedUrl(path, 60 * 60); // 1 hour
-    if (error) return null;
-    return data?.signedUrl || null;
-  }
-
-  // Render comments first (links load lazily)
-  commentsList.innerHTML = comments.map(c => {
-    const list = byComment.get(c.id) || [];
-    const attHtml = list.length
-      ? `<div class="muted" style="margin-top:8px">Attachments:</div>
-         <ul style="margin:6px 0 0 18px">
-           ${list.map(a => `
-             <li>
-               <a href="#" data-att="${a.storage_path}" data-name="${escapeHtml(a.file_name)}">
-                 ${escapeHtml(a.file_name)}
-               </a>
-               <span class="muted">(${a.mime_type || "file"}${a.file_size ? ", " + a.file_size + " bytes" : ""})</span>
-             </li>
-           `).join("")}
-         </ul>`
-      : "";
-
-    return `
-      <div class="commentItem">
-        <div class="commentMeta">
-          <span>${escapeHtml(c.author_email || "(unknown)")}</span>
-          <span class="mono" style="margin-left:8px">${fmtDate(c.created_at)}</span>
-        </div>
-        <div class="commentBody">${escapeHtml(c.comment)}</div>
-        ${attHtml}
-      </div>
-    `;
-  }).join("");
-
-  // Hook attachment clicks -> signed URL -> open
-  commentsList.querySelectorAll("a[data-att]").forEach(a => {
-    a.addEventListener("click", async (e) => {
-      e.preventDefault();
-      const path = a.getAttribute("data-att");
-      setStatus(commentsStatus, "ok", "Preparing download…");
-      const url = await makeSignedUrl(path);
-      if (!url) {
-        setStatus(commentsStatus, "err", "❌ Could not create download link.");
+      if (cErr) {
+        console.error("loadComments error:", cErr);
+        commentsList.innerHTML = `<div class="muted">Could not load comments.</div>`;
+        setStatus(commentsStatus, "err", "❌ " + cErr.message);
         return;
       }
-      clearStatus(commentsStatus);
-      window.open(url, "_blank", "noopener,noreferrer");
-    });
-  });
-}
 
-    
+      const { data: atts, error: aErr } = await supabase
+        .from("ticket_comment_attachments")
+        .select("id, ticket_id, comment_id, file_name, mime_type, file_size, storage_path, created_at")
+        .eq("ticket_id", ticketId)
+        .order("created_at", { ascending: true });
+
+      if (aErr) console.error("loadAttachments error:", aErr);
+
+      const byComment = new Map();
+      (atts || []).forEach(a => {
+        if (!byComment.has(a.comment_id)) byComment.set(a.comment_id, []);
+        byComment.get(a.comment_id).push(a);
+      });
+
+      if (!comments || comments.length === 0) {
+        commentsList.innerHTML = `<div class="muted">No comments yet.</div>`;
+        return;
+      }
+
+      async function makeSignedUrl(path){
+        const { data, error } = await supabase.storage
+          .from(ATTACH_BUCKET)
+          .createSignedUrl(path, 60 * 60); // 1 hour
+        if (error) return null;
+        return data?.signedUrl || null;
+      }
+
+      commentsList.innerHTML = comments.map(c => {
+        const list = byComment.get(c.id) || [];
+        const attHtml = list.length
+          ? `<div class="muted" style="margin-top:8px">Attachments:</div>
+             <ul style="margin:6px 0 0 18px">
+               ${list.map(a => `
+                 <li>
+                   <a href="#" data-att="${escapeHtml(a.storage_path)}">${escapeHtml(a.file_name)}</a>
+                   <span class="muted">(${escapeHtml(a.mime_type || "file")}${a.file_size ? ", " + a.file_size + " bytes" : ""})</span>
+                 </li>
+               `).join("")}
+             </ul>`
+          : "";
+
+        return `
+          <div class="commentItem">
+            <div class="commentMeta">
+              <span>${escapeHtml(c.author_email || "(unknown)")}</span>
+              <span class="mono" style="margin-left:8px">${fmtDate(c.created_at)}</span>
+            </div>
+            <div class="commentBody">${escapeHtml(c.comment)}</div>
+            ${attHtml}
+          </div>
+        `;
+      }).join("");
+
+      commentsList.querySelectorAll("a[data-att]").forEach(a => {
+        a.addEventListener("click", async (e) => {
+          e.preventDefault();
+          const path = a.getAttribute("data-att");
+          setStatus(commentsStatus, "ok", "Preparing download…");
+          const url = await makeSignedUrl(path);
+          if (!url) {
+            setStatus(commentsStatus, "err", "❌ Could not create download link.");
+            return;
+          }
+          clearStatus(commentsStatus);
+          window.open(url, "_blank", "noopener,noreferrer");
+        });
+      });
+    }
+
+    // Add Comment (ONE handler only — not inside loadComments)
+    addCommentBtn.addEventListener("click", async () => {
+      clearStatus(commentsStatus);
+
+      const ticketId = activeTicketId;
+      const text = (newCommentText.value || "").trim();
+      const files = Array.from(commentFiles?.files || []);
+
+      if (!ticketId) {
+        setStatus(commentsStatus, "err", "❌ No active ticket.");
+        return;
+      }
+      if (!text && files.length === 0) {
+        setStatus(commentsStatus, "err", "❌ Type a comment or attach a file.");
+        return;
+      }
+
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
+      if (!user) {
+        setStatus(commentsStatus, "err", "❌ Please login first.");
+        return;
+      }
+
+      const MAX_FILES = 5;
+      const MAX_MB_EACH = 10;
+
+      if (files.length > MAX_FILES) {
+        setStatus(commentsStatus, "err", `❌ Max ${MAX_FILES} files per comment.`);
+        return;
+      }
+      for (const f of files) {
+        if (f.size > MAX_MB_EACH * 1024 * 1024) {
+          setStatus(commentsStatus, "err", `❌ "${f.name}" is too large (max ${MAX_MB_EACH}MB).`);
+          return;
+        }
+      }
+
+      try {
+        addCommentBtn.disabled = true;
+        setStatus(commentsStatus, "ok", "Saving comment…");
+
+        const { data: cRow, error: cErr } = await supabase
+          .from("ticket_comments")
+          .insert({
+            ticket_id: ticketId,
+            author_id: user.id,
+            author_email: user.email,
+            comment: text || "(attachment)",
+          })
+          .select("id")
+          .single();
+
+        if (cErr) throw cErr;
+        const commentId = cRow.id;
+
+        if (files.length > 0) {
+          setStatus(commentsStatus, "ok", `Uploading ${files.length} file(s)…`);
+          for (const file of files) {
+            await uploadOneAttachment({ ticketId, commentId, file, user });
+          }
+        }
+
+        newCommentText.value = "";
+        if (commentFiles) commentFiles.value = "";
+        setStatus(commentsStatus, "ok", "✅ Comment added.");
+        await loadComments(ticketId);
+
+      } catch (err) {
+        console.error("addComment error:", err);
+        setStatus(commentsStatus, "err", "❌ Could not add comment: " + (err?.message || "Check RLS/Storage policies."));
+      } finally {
+        addCommentBtn.disabled = false;
+      }
+    });
+
+    refreshCommentsBtn.addEventListener("click", () => {
+      if (activeTicketId) loadComments(activeTicketId);
+    });
+
     // ===== Tickets =====
     async function loadMyTickets(){
       clearStatus(mineStatus);
@@ -895,7 +873,6 @@ refreshCommentsBtn.addEventListener("click", () => {
         `;
       }).join("");
 
-      // Comments buttons
       manageBody.querySelectorAll("button[data-comments]").forEach(btn => {
         btn.addEventListener("click", () => {
           const id = btn.getAttribute("data-comments");
@@ -904,7 +881,6 @@ refreshCommentsBtn.addEventListener("click", () => {
         });
       });
 
-      // Status change handler (manager/admin)
       manageBody.querySelectorAll('select[data-field="status"][data-id]').forEach(sel => {
         sel.addEventListener("change", async () => {
           const id = sel.getAttribute("data-id");
@@ -925,7 +901,6 @@ refreshCommentsBtn.addEventListener("click", () => {
         });
       });
 
-      // Hours save handler (admin only)
       if (currentRole === "admin") {
         manageBody.querySelectorAll('button[data-save]').forEach(btn => {
           btn.addEventListener("click", async () => {
@@ -1115,7 +1090,6 @@ refreshCommentsBtn.addEventListener("click", () => {
         </tr>
       `).join("") || `<tr><td colspan="5" class="muted">No profiles found.</td></tr>`;
 
-      // Save handler
       usersBody.querySelectorAll("button[data-save]").forEach(btn => {
         btn.addEventListener("click", async () => {
           const id = btn.getAttribute("data-save");
@@ -1138,7 +1112,6 @@ refreshCommentsBtn.addEventListener("click", () => {
         });
       });
 
-      // Deactivate/reactivate
       usersBody.querySelectorAll("button[data-toggle]").forEach(btn => {
         btn.addEventListener("click", async () => {
           const id = btn.getAttribute("data-toggle");
@@ -1192,26 +1165,21 @@ refreshCommentsBtn.addEventListener("click", () => {
       currentUser = session.user;
       await loadProfile(session.user.id);
 
-      // Show admin link only for admins
       if (currentRole === "admin") show(adminLink);
       else hide(adminLink);
 
-      // If non-admin tries to access #admin, bounce them back
       const wantsAdminView = window.location.hash === "#admin";
       if (wantsAdminView && currentRole !== "admin") {
         goToHash("#");
         setStatus(mineStatus, "err", "❌ Admin access required.");
       }
 
-      // Badge
       roleBadge.textContent = `Role: ${String(currentRole || "user").toUpperCase()}`;
 
-      // Show portal
       hide(authCard);
       show(portal);
       show(logoutBtn);
 
-      // Manager/admin ticket panel
       if (currentRole === "manager") {
         show(manageCard);
         manageTitle.textContent = "Team Tickets";
@@ -1224,7 +1192,6 @@ refreshCommentsBtn.addEventListener("click", () => {
         hide(manageCard);
       }
 
-      // Admin maintenance panel (admins only + only when #admin)
       const wantsAdminView2 = window.location.hash === "#admin";
       if (currentRole === "admin" && wantsAdminView2) {
         show(adminMaintenance);
@@ -1235,7 +1202,6 @@ refreshCommentsBtn.addEventListener("click", () => {
         hide(adminMaintenance);
       }
 
-      // Load ticket tables
       await loadMyTickets();
       if (currentRole === "manager" || currentRole === "admin") {
         await loadManageTickets();
@@ -1246,12 +1212,10 @@ refreshCommentsBtn.addEventListener("click", () => {
     const { data: { session } } = await supabase.auth.getSession();
     await setUiForSession(session);
 
-    // Auth events
     supabase.auth.onAuthStateChange(async (_event, newSession) => {
       await setUiForSession(newSession);
     });
 
-    // Hash route changes (so switching works instantly)
     window.addEventListener("hashchange", async () => {
       const { data: { session } } = await supabase.auth.getSession();
       await setUiForSession(session);
@@ -1277,7 +1241,6 @@ refreshCommentsBtn.addEventListener("click", () => {
 
     loginBtn.addEventListener("click", doLogin);
 
-    // Enter key triggers login
     [emailEl, passEl].forEach(el => {
       el.addEventListener("keydown", (e) => {
         if (e.key === "Enter") doLogin();
