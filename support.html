@@ -552,98 +552,103 @@
     window.addEventListener("keydown", (e) => {
       if (e.key === "Escape" && !commentsOverlay.classList.contains("hide")) closeCommentsModal();
     });
+    
+async function loadComments(ticketId){
+  clearStatus(commentsStatus);
+  commentsList.innerHTML = `<div class="muted">Loading…</div>`;
 
-    async function loadComments(ticketId){
-      clearStatus(commentsStatus);
-      commentsList.innerHTML = `<div class="muted">Loading…</div>`;
+  const { data: comments, error: cErr } = await supabase
+    .from("ticket_comments")
+    .select("id, created_at, author_email, comment")
+    .eq("ticket_id", ticketId)
+    .order("created_at", { ascending: true });
 
-      const { data, error } = await supabase
-        .from("ticket_comments")
-        .select("id, created_at, author_email, comment")
-        .eq("ticket_id", ticketId)
-        .order("created_at", { ascending: true });
+  if (cErr) {
+    console.error("loadComments error:", cErr);
+    commentsList.innerHTML = `<div class="muted">Could not load comments.</div>`;
+    setStatus(commentsStatus, "err", "❌ " + cErr.message);
+    return;
+  }
 
-      if (error) {
-        console.error("loadComments error:", error);
-        commentsList.innerHTML = `<div class="muted">Could not load comments.</div>`;
-        setStatus(commentsStatus, "err", "❌ " + error.message);
-        return;
-      }
+  // Pull all attachments for this ticket (we’ll group by comment_id)
+  const { data: atts, error: aErr } = await supabase
+    .from("ticket_comment_attachments")
+    .select("id, comment_id, file_name, mime_type, file_size, storage_path, created_at")
+    .eq("ticket_id", ticketId)
+    .order("created_at", { ascending: true });
 
-      if (!data || data.length === 0) {
-        commentsList.innerHTML = `<div class="muted">No comments yet.</div>`;
-        return;
-      }
+  if (aErr) {
+    console.error("loadAttachments error:", aErr);
+    // not fatal; show comments anyway
+  }
 
-      commentsList.innerHTML = data.map(c => `
-        <div class="commentItem">
-          <div class="commentMeta">
-            <span>${escapeHtml(c.author_email || "(unknown)")}</span>
-            <span class="mono" style="margin-left:8px">${fmtDate(c.created_at)}</span>
-          </div>
-          <div class="commentBody">${escapeHtml(c.comment)}</div>
+  const byComment = new Map();
+  (atts || []).forEach(a => {
+    if (!byComment.has(a.comment_id)) byComment.set(a.comment_id, []);
+    byComment.get(a.comment_id).push(a);
+  });
+
+  if (!comments || comments.length === 0) {
+    commentsList.innerHTML = `<div class="muted">No comments yet.</div>`;
+    return;
+  }
+
+  // helper to create a downloadable link (public read policy will allow direct getPublicUrl, but bucket is private, so use signed url)
+  async function makeSignedUrl(path){
+    const { data, error } = await supabase.storage
+      .from("ticket-attachments")
+      .createSignedUrl(path, 60 * 60); // 1 hour
+    if (error) return null;
+    return data?.signedUrl || null;
+  }
+
+  // Render comments first (links load lazily)
+  commentsList.innerHTML = comments.map(c => {
+    const list = byComment.get(c.id) || [];
+    const attHtml = list.length
+      ? `<div class="muted" style="margin-top:8px">Attachments:</div>
+         <ul style="margin:6px 0 0 18px">
+           ${list.map(a => `
+             <li>
+               <a href="#" data-att="${a.storage_path}" data-name="${escapeHtml(a.file_name)}">
+                 ${escapeHtml(a.file_name)}
+               </a>
+               <span class="muted">(${a.mime_type || "file"}${a.file_size ? ", " + a.file_size + " bytes" : ""})</span>
+             </li>
+           `).join("")}
+         </ul>`
+      : "";
+
+    return `
+      <div class="commentItem">
+        <div class="commentMeta">
+          <span>${escapeHtml(c.author_email || "(unknown)")}</span>
+          <span class="mono" style="margin-left:8px">${fmtDate(c.created_at)}</span>
         </div>
-      `).join("");
-    }
+        <div class="commentBody">${escapeHtml(c.comment)}</div>
+        ${attHtml}
+      </div>
+    `;
+  }).join("");
 
-    refreshCommentsBtn.addEventListener("click", async () => {
-      if (!activeTicketId) return;
-      await loadComments(activeTicketId);
-    });
-
-    addCommentBtn.addEventListener("click", async () => {
+  // Hook attachment clicks -> signed URL -> open
+  commentsList.querySelectorAll("a[data-att]").forEach(a => {
+    a.addEventListener("click", async (e) => {
+      e.preventDefault();
+      const path = a.getAttribute("data-att");
+      setStatus(commentsStatus, "ok", "Preparing download…");
+      const url = await makeSignedUrl(path);
+      if (!url) {
+        setStatus(commentsStatus, "err", "❌ Could not create download link.");
+        return;
+      }
       clearStatus(commentsStatus);
-
-      if (!activeTicketId) {
-        setStatus(commentsStatus, "err", "❌ No active ticket selected.");
-        return;
-      }
-
-      const text = newCommentText.value.trim();
-      if (!text) {
-        setStatus(commentsStatus, "err", "❌ Type a comment first.");
-        return;
-      }
-
-      addCommentBtn.disabled = true;
-      setStatus(commentsStatus, "ok", "Adding…");
-
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        const user = session?.user;
-
-        if (!user) {
-          setStatus(commentsStatus, "err", "❌ Please login again.");
-          addCommentBtn.disabled = false;
-          return;
-        }
-
-        // IMPORTANT: author_id is NOT NULL in your schema
-        const payload = {
-          ticket_id: activeTicketId,
-          author_id: user.id,         // ✅ required
-          author_email: user.email,   // optional
-          comment: text
-        };
-
-        const { error } = await supabase
-          .from("ticket_comments")
-          .insert(payload);
-
-        if (error) throw error;
-
-        newCommentText.value = "";
-        setStatus(commentsStatus, "ok", "✅ Comment added.");
-        await loadComments(activeTicketId);
-
-      } catch (err) {
-        console.error("addComment error:", err);
-        setStatus(commentsStatus, "err", "❌ " + (err?.message || "Could not add comment."));
-      } finally {
-        addCommentBtn.disabled = false;
-      }
+      window.open(url, "_blank", "noopener,noreferrer");
     });
+  });
+}
 
+    
     // ===== Tickets =====
     async function loadMyTickets(){
       clearStatus(mineStatus);
