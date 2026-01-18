@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Support Portal | NewAge Technologies</title>
   <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+
   <style>
     :root{
       --bg:#07070A; --card:#0F111B; --border:rgba(255,255,255,.10);
@@ -37,7 +38,6 @@
     .btn.secondary{
       background:transparent;border:1px solid rgba(255,255,255,.16);color:var(--text);font-weight:650
     }
-    .btn.small{padding:7px 10px;border-radius:10px;font-weight:700;font-size:12px}
     .btn.danger:hover{ background: rgba(255,106,26,.10); }
     .btn:disabled{opacity:.65;cursor:not-allowed}
     .actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
@@ -65,49 +65,46 @@
     .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
     @media(max-width:980px){.grid2{grid-template-columns:1fr}}
 
-    /* ===== Comments modal ===== */
-    .overlay{
+    /* ===== Comments Modal ===== */
+    .modalOverlay{
       position:fixed; inset:0;
       background:rgba(0,0,0,.55);
-      display:none;
-      align-items:center;
-      justify-content:center;
-      padding:16px;
+      display:flex; align-items:center; justify-content:center;
+      padding:18px;
       z-index:9999;
     }
-    .overlay.show{display:flex}
     .modal{
-      width:min(860px, 100%);
+      width:min(900px, 98vw);
       max-height:85vh;
       overflow:auto;
       background:var(--card);
       border:1px solid var(--border);
       border-radius:16px;
-      padding:14px;
-      box-shadow:0 16px 40px rgba(0,0,0,.45);
+      box-shadow:0 20px 60px rgba(0,0,0,.55);
+      padding:16px;
     }
-    .modal-head{
-      display:flex;
-      justify-content:space-between;
-      align-items:flex-start;
-      gap:10px;
-      flex-wrap:wrap;
+    .modalHeader{
+      display:flex; align-items:flex-start; justify-content:space-between; gap:12px;
+      margin-bottom:10px;
     }
-    .comment-list{
-      margin-top:10px;
+    .commentList{
       border:1px solid rgba(255,255,255,.10);
-      border-radius:14px;
-      background:rgba(255,255,255,.03);
+      border-radius:12px;
       padding:10px;
+      background:rgba(255,255,255,.02);
+      margin-top:10px;
     }
-    .comment-item{
-      padding:10px;
+    .commentItem{
+      padding:10px 8px;
       border-bottom:1px solid rgba(255,255,255,.08);
     }
-    .comment-item:last-child{border-bottom:0}
-    .comment-meta{color:rgba(243,246,255,.75);font-size:12px;margin-bottom:6px}
-    .comment-body{white-space:pre-wrap}
-    .modal-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px}
+    .commentItem:last-child{border-bottom:none}
+    .commentMeta{color:rgba(243,246,255,.75); font-size:12px; margin-bottom:6px}
+    .commentBody{white-space:pre-wrap}
+    .smallBtn{
+      padding:8px 10px;border-radius:12px;border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.03);color:var(--text);cursor:pointer;font-weight:650
+    }
   </style>
 </head>
 
@@ -241,7 +238,7 @@
                 <th>Requester</th>
                 <th>Subject</th>
                 <th>Priority</th>
-                <th>Status (change)</th>
+                <th>Status / Hours</th>
                 <th>Ticket ID</th>
                 <th>Comments</th>
               </tr>
@@ -324,36 +321,33 @@
             </table>
           </div>
         </div>
-
       </div>
     </div>
   </div>
 
   <!-- COMMENTS MODAL -->
-  <div id="commentsOverlay" class="overlay" aria-hidden="true">
+  <div id="commentsOverlay" class="modalOverlay hide" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="commentsTitle">
-      <div class="modal-head">
+      <div class="modalHeader">
         <div>
           <h2 id="commentsTitle" style="margin:0">Ticket Comments</h2>
-          <div class="muted" id="commentsSub"></div>
+          <div class="muted" id="commentsTicketLine"></div>
         </div>
-        <div class="actions">
-          <button id="commentsCloseBtn" class="btn secondary small" type="button">Close</button>
-        </div>
+        <button id="closeCommentsBtn" class="smallBtn" type="button">Close</button>
       </div>
 
       <div id="commentsStatus" class="status" role="status" aria-live="polite"></div>
 
-      <div class="comment-list" id="commentsList">
-        <div class="muted">No comments yet.</div>
+      <div class="commentList" id="commentsList">
+        <div class="muted">Loading…</div>
       </div>
 
-      <div style="margin-top:10px">
-        <label for="commentText">Add a comment</label>
-        <textarea id="commentText" placeholder="Type your update..."></textarea>
-        <div class="modal-actions">
+      <div style="margin-top:12px">
+        <label for="newCommentText">Add a comment</label>
+        <textarea id="newCommentText" placeholder="Type your comment…"></textarea>
+        <div class="actions" style="margin-top:10px">
           <button id="addCommentBtn" class="btn" type="button">Add Comment</button>
-          <div class="muted" id="commentHint"></div>
+          <button id="refreshCommentsBtn" class="btn secondary" type="button">Refresh</button>
         </div>
       </div>
     </div>
@@ -413,13 +407,13 @@
 
     // Comments modal elements
     const commentsOverlay = document.getElementById("commentsOverlay");
-    const commentsCloseBtn = document.getElementById("commentsCloseBtn");
+    const closeCommentsBtn = document.getElementById("closeCommentsBtn");
+    const commentsTicketLine = document.getElementById("commentsTicketLine");
     const commentsStatus = document.getElementById("commentsStatus");
     const commentsList = document.getElementById("commentsList");
-    const commentsSub = document.getElementById("commentsSub");
-    const commentText = document.getElementById("commentText");
+    const newCommentText = document.getElementById("newCommentText");
     const addCommentBtn = document.getElementById("addCommentBtn");
-    const commentHint = document.getElementById("commentHint");
+    const refreshCommentsBtn = document.getElementById("refreshCommentsBtn");
 
     // Helpers
     function show(el){ el.classList.remove("hide"); }
@@ -446,185 +440,9 @@
       const s = status || "open";
       return `<span class="pill ${s}">${s.charAt(0).toUpperCase() + s.slice(1)}</span>`;
     }
-
     function goToHash(hash){
       if (window.location.hash !== hash) window.location.hash = hash;
     }
-
-    // ===== Comments helpers (robust column detection) =====
-    const COMMENT_FIELDS = ["comment", "body", "message", "content", "text"];
-    let activeTicketId = null;
-    let activeTicketSubject = "";
-    let activeTicketRequester = "";
-    let lastDetectedCommentField = "comment";
-
-    function showOverlay(){
-      commentsOverlay.classList.add("show");
-      commentsOverlay.setAttribute("aria-hidden", "false");
-    }
-    function hideOverlay(){
-      commentsOverlay.classList.remove("show");
-      commentsOverlay.setAttribute("aria-hidden", "true");
-    }
-
-    function getCommentTextFromRow(row){
-      for (const k of COMMENT_FIELDS) {
-        if (row && row[k] != null) return String(row[k]);
-      }
-      // fallback: first string-ish field that looks like a message
-      for (const [k,v] of Object.entries(row || {})) {
-        if (typeof v === "string" && v.length) return v;
-      }
-      return "";
-    }
-
-    function getAuthorFromRow(row){
-      return row?.author_email || row?.email || row?.created_by_email || row?.user_email || row?.commenter_email || row?.created_by || "";
-    }
-
-    function detectCommentFieldFromRow(row){
-      for (const k of COMMENT_FIELDS) {
-        if (row && Object.prototype.hasOwnProperty.call(row, k)) return k;
-      }
-      return "comment";
-    }
-
-    async function loadComments(ticketId){
-      clearStatus(commentsStatus);
-      commentsList.innerHTML = `<div class="muted">Loading comments…</div>`;
-
-      const { data, error } = await supabase
-        .from("ticket_comments")
-        .select("*")
-        .eq("ticket_id", ticketId)
-        .order("created_at", { ascending: true });
-
-      if (error) {
-        console.error(error);
-        setStatus(commentsStatus, "err", "❌ Could not load comments (check RLS).");
-        commentsList.innerHTML = `<div class="muted">No comments loaded.</div>`;
-        return;
-      }
-
-      if (!data || data.length === 0) {
-        commentsList.innerHTML = `<div class="muted">No comments yet.</div>`;
-        return;
-      }
-
-      // detect field name from first row, if possible
-      lastDetectedCommentField = detectCommentFieldFromRow(data[0]);
-
-      commentsList.innerHTML = data.map(c => {
-        const body = escapeHtml(getCommentTextFromRow(c));
-        const who = escapeHtml(getAuthorFromRow(c)) || "—";
-        const when = c.created_at ? fmtDate(c.created_at) : "";
-        return `
-          <div class="comment-item">
-            <div class="comment-meta">${who} ${when ? "• " + escapeHtml(when) : ""}</div>
-            <div class="comment-body">${body || "<span class='muted'>(empty)</span>"}</div>
-          </div>
-        `;
-      }).join("");
-    }
-
-    async function tryInsertComment(ticketId, text){
-      // Try known column names, starting with last detected.
-      const candidates = [lastDetectedCommentField, ...COMMENT_FIELDS.filter(x => x !== lastDetectedCommentField)];
-
-      for (const field of candidates) {
-        const payload = { ticket_id: ticketId };
-        payload[field] = text;
-
-        const { error } = await supabase
-          .from("ticket_comments")
-          .insert(payload);
-
-        if (!error) return { ok: true, fieldUsed: field };
-
-        const msg = String(error.message || "").toLowerCase();
-        // If column doesn't exist, try next. Otherwise stop.
-        if (msg.includes("column") && msg.includes("does not exist")) continue;
-
-        return { ok: false, error };
-      }
-
-      return { ok: false, error: new Error("No compatible comment column found. Add a text column like comment/body/message.") };
-    }
-
-    async function openComments(ticketId, subject, requesterEmail){
-      activeTicketId = ticketId;
-      activeTicketSubject = subject || "";
-      activeTicketRequester = requesterEmail || "";
-
-      commentsSub.textContent =
-        `Ticket: ${ticketId}${activeTicketSubject ? " • " + activeTicketSubject : ""}`;
-
-      commentText.value = "";
-      clearStatus(commentsStatus);
-
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) {
-        addCommentBtn.disabled = true;
-        commentHint.textContent = "Login required to add a comment.";
-      } else {
-        addCommentBtn.disabled = false;
-        commentHint.textContent = "";
-      }
-
-      showOverlay();
-      await loadComments(ticketId);
-    }
-
-    commentsCloseBtn.addEventListener("click", hideOverlay);
-    commentsOverlay.addEventListener("click", (e) => {
-      if (e.target === commentsOverlay) hideOverlay();
-    });
-    window.addEventListener("keydown", (e) => {
-      if (e.key === "Escape" && commentsOverlay.classList.contains("show")) hideOverlay();
-    });
-
-    addCommentBtn.addEventListener("click", async () => {
-      clearStatus(commentsStatus);
-
-      const text = (commentText.value || "").trim();
-      if (!text) {
-        setStatus(commentsStatus, "err", "❌ Type a comment first.");
-        return;
-      }
-      if (!activeTicketId) return;
-
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) {
-        setStatus(commentsStatus, "err", "❌ Please login first.");
-        return;
-      }
-
-      addCommentBtn.disabled = true;
-      setStatus(commentsStatus, "ok", "Saving comment…");
-
-      const res = await tryInsertComment(activeTicketId, text);
-
-      if (!res.ok) {
-        console.error(res.error);
-        setStatus(commentsStatus, "err",
-          "❌ Could not add comment. (Check ticket_comments schema + RLS)");
-      } else {
-        setStatus(commentsStatus, "ok", "✅ Comment added.");
-        commentText.value = "";
-        await loadComments(activeTicketId);
-        // optional: refresh tables if you later add comment counts
-
-        if (error) {
-        console.error("ticket_comments insert error:", error);
-        setStatus(commentsStatus, "err", "❌ " + (error.message || JSON.stringify(error)));
-        return;
-        }
-
-        
-      }
-
-      addCommentBtn.disabled = false;
-    });
 
     // State
     let currentUser = null;
@@ -634,6 +452,10 @@
     // Cache
     let orgsCache = [];
     let profilesCache = [];
+
+    // Comments modal state
+    let activeTicketId = null;
+    let activeTicketSubject = null;
 
     // Tabs
     function activateAdminTab(which){
@@ -653,7 +475,7 @@
     tabOrgs.addEventListener("click", () => activateAdminTab("orgs"));
     tabUsers.addEventListener("click", () => activateAdminTab("users"));
 
-    // Robust profile loader
+    // Robust profile loader (filters by user id + fallback if is_active column missing)
     async function loadProfile(userId){
       currentRole = "user";
       currentOrgId = null;
@@ -665,7 +487,7 @@
         .eq("id", userId)
         .single();
 
-      // If schema doesn't have is_active, fallback
+      // If schema doesn't have is_active yet, fallback
       if (res.error && String(res.error.message || "").toLowerCase().includes("is_active")) {
         res = await supabase
           .from("profiles")
@@ -681,6 +503,7 @@
         return;
       }
 
+      // Soft delete check only if column exists
       if (Object.prototype.hasOwnProperty.call(data, "is_active") && data.is_active === false) {
         alert("Your account has been deactivated. Please contact support.");
         await supabase.auth.signOut();
@@ -693,13 +516,135 @@
       currentOrgId = data?.org_id || null;
     }
 
+    // ===== COMMENTS (ticket_comments) =====
+    function openCommentsModal(ticketId, subject){
+      activeTicketId = ticketId;
+      activeTicketSubject = subject || "";
+      commentsTicketLine.textContent = `Ticket: ${ticketId}${subject ? " • " + subject : ""}`;
+      newCommentText.value = "";
+      clearStatus(commentsStatus);
+      show(commentsOverlay);
+      commentsOverlay.setAttribute("aria-hidden", "false");
+      loadComments(ticketId);
+    }
+
+    function closeCommentsModal(){
+      hide(commentsOverlay);
+      commentsOverlay.setAttribute("aria-hidden", "true");
+      activeTicketId = null;
+      activeTicketSubject = null;
+      commentsList.innerHTML = `<div class="muted">—</div>`;
+      clearStatus(commentsStatus);
+      newCommentText.value = "";
+    }
+
+    closeCommentsBtn.addEventListener("click", closeCommentsModal);
+    commentsOverlay.addEventListener("click", (e) => {
+      if (e.target === commentsOverlay) closeCommentsModal();
+    });
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !commentsOverlay.classList.contains("hide")) closeCommentsModal();
+    });
+
+    async function loadComments(ticketId){
+      clearStatus(commentsStatus);
+      commentsList.innerHTML = `<div class="muted">Loading…</div>`;
+
+      const { data, error } = await supabase
+        .from("ticket_comments")
+        .select("id, created_at, author_email, comment")
+        .eq("ticket_id", ticketId)
+        .order("created_at", { ascending: true });
+
+      if (error) {
+        console.error("loadComments error:", error);
+        commentsList.innerHTML = `<div class="muted">Could not load comments.</div>`;
+        setStatus(commentsStatus, "err", "❌ " + error.message);
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        commentsList.innerHTML = `<div class="muted">No comments yet.</div>`;
+        return;
+      }
+
+      commentsList.innerHTML = data.map(c => `
+        <div class="commentItem">
+          <div class="commentMeta">
+            <span>${escapeHtml(c.author_email || "(unknown)")}</span>
+            <span class="mono" style="margin-left:8px">${fmtDate(c.created_at)}</span>
+          </div>
+          <div class="commentBody">${escapeHtml(c.comment)}</div>
+        </div>
+      `).join("");
+    }
+
+    refreshCommentsBtn.addEventListener("click", async () => {
+      if (!activeTicketId) return;
+      await loadComments(activeTicketId);
+    });
+
+    addCommentBtn.addEventListener("click", async () => {
+      clearStatus(commentsStatus);
+
+      if (!activeTicketId) {
+        setStatus(commentsStatus, "err", "❌ No active ticket selected.");
+        return;
+      }
+
+      const text = newCommentText.value.trim();
+      if (!text) {
+        setStatus(commentsStatus, "err", "❌ Type a comment first.");
+        return;
+      }
+
+      addCommentBtn.disabled = true;
+      setStatus(commentsStatus, "ok", "Adding…");
+
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const user = session?.user;
+
+        if (!user) {
+          setStatus(commentsStatus, "err", "❌ Please login again.");
+          addCommentBtn.disabled = false;
+          return;
+        }
+
+        // IMPORTANT: author_id is NOT NULL in your schema
+        const payload = {
+          ticket_id: activeTicketId,
+          author_id: user.id,         // ✅ required
+          author_email: user.email,   // optional
+          comment: text
+        };
+
+        const { error } = await supabase
+          .from("ticket_comments")
+          .insert(payload);
+
+        if (error) throw error;
+
+        newCommentText.value = "";
+        setStatus(commentsStatus, "ok", "✅ Comment added.");
+        await loadComments(activeTicketId);
+
+      } catch (err) {
+        console.error("addComment error:", err);
+        setStatus(commentsStatus, "err", "❌ " + (err?.message || "Could not add comment."));
+      } finally {
+        addCommentBtn.disabled = false;
+      }
+    });
+
+    // ===== Tickets =====
     async function loadMyTickets(){
       clearStatus(mineStatus);
       mineBody.innerHTML = "";
 
       const { data, error } = await supabase
         .from("tickets")
-        .select("id, created_at, subject, priority, status, requester_email")
+        .select("id, created_at, subject, priority, status")
         .order("created_at", { ascending: false });
 
       if (error) {
@@ -721,27 +666,16 @@
           <td>${pill(t.status)}</td>
           <td class="mono">${t.id}</td>
           <td>
-            <button class="btn secondary small" type="button"
-              data-comments="1"
-              data-ticket-id="${t.id}"
-              data-ticket-subject="${escapeHtml(t.subject)}"
-              data-ticket-email="${escapeHtml(t.requester_email || "")}">
-              💬 Comments
-            </button>
+            <button class="smallBtn" type="button" data-comments="${t.id}" data-subject="${escapeHtml(t.subject)}">Comments</button>
           </td>
         </tr>
       `).join("");
 
-      bindCommentsButtons(mineBody);
-    }
-
-    function bindCommentsButtons(root){
-      root.querySelectorAll("button[data-comments='1']").forEach(btn => {
-        btn.addEventListener("click", async () => {
-          const id = btn.getAttribute("data-ticket-id");
-          const subject = btn.getAttribute("data-ticket-subject") || "";
-          const email = btn.getAttribute("data-ticket-email") || "";
-          await openComments(id, subject, email);
+      mineBody.querySelectorAll("button[data-comments]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const id = btn.getAttribute("data-comments");
+          const subj = btn.getAttribute("data-subject") || "";
+          openCommentsModal(id, subj);
         });
       });
     }
@@ -796,7 +730,7 @@
                     value="${hoursVal}"
                     title="Hours worked"
                   />
-                  <button class="btn secondary small" type="button" data-save="${t.id}">Save</button>
+                  <button class="smallBtn" type="button" data-save="${t.id}">Save</button>
                 ` : ``}
               </div>
             </td>
@@ -804,19 +738,22 @@
             <td class="mono">${t.id}</td>
 
             <td>
-              <button class="btn secondary small" type="button"
-                data-comments="1"
-                data-ticket-id="${t.id}"
-                data-ticket-subject="${escapeHtml(t.subject)}"
-                data-ticket-email="${escapeHtml(t.requester_email || "")}">
-                💬 Comments
-              </button>
+              <button class="smallBtn" type="button" data-comments="${t.id}" data-subject="${escapeHtml(t.subject)}">Comments</button>
             </td>
           </tr>
         `;
       }).join("");
 
-      // Status change handler
+      // Comments buttons
+      manageBody.querySelectorAll("button[data-comments]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const id = btn.getAttribute("data-comments");
+          const subj = btn.getAttribute("data-subject") || "";
+          openCommentsModal(id, subj);
+        });
+      });
+
+      // Status change handler (manager/admin)
       manageBody.querySelectorAll('select[data-field="status"][data-id]').forEach(sel => {
         sel.addEventListener("change", async () => {
           const id = sel.getAttribute("data-id");
@@ -830,7 +767,7 @@
 
           if (error) {
             console.error(error);
-            setStatus(manageStatus, "err", "❌ Status update failed (check RLS role/org).");
+            setStatus(manageStatus, "err", "❌ Status update failed: " + error.message);
           } else {
             setStatus(manageStatus, "ok", "✅ Status updated.");
           }
@@ -861,7 +798,7 @@
 
             if (error) {
               console.error(error);
-              setStatus(manageStatus, "err", "❌ Save failed (check RLS policies for admin update).");
+              setStatus(manageStatus, "err", "❌ Save failed: " + error.message);
             } else {
               setStatus(manageStatus, "ok", "✅ Saved status + hours.");
               await loadManageTickets();
@@ -869,8 +806,6 @@
           });
         });
       }
-
-      bindCommentsButtons(manageBody);
     }
 
     // ===== ADMIN MAINTENANCE =====
@@ -899,8 +834,8 @@
           <td>${escapeHtml(o.name)}</td>
           <td class="mono">${o.id}</td>
           <td class="actions">
-            <button class="btn secondary small" data-rename="${o.id}" type="button">Rename</button>
-            <button class="btn danger small" data-delete="${o.id}" type="button">Delete</button>
+            <button class="btn secondary" data-rename="${o.id}" type="button">Rename</button>
+            <button class="btn danger" data-delete="${o.id}" type="button">Delete</button>
           </td>
         </tr>
       `).join("") || `<tr><td colspan="3" class="muted">No organizations yet.</td></tr>`;
@@ -920,7 +855,7 @@
 
           if (error) {
             console.error(error);
-            setStatus(orgStatus, "err", "❌ Rename failed (name must be unique).");
+            setStatus(orgStatus, "err", "❌ Rename failed: " + error.message);
           } else {
             setStatus(orgStatus, "ok", "✅ Organization renamed.");
             await loadOrganizations();
@@ -966,7 +901,7 @@
 
       if (error) {
         console.error(error);
-        setStatus(orgStatus, "err", "❌ Create failed (maybe already exists).");
+        setStatus(orgStatus, "err", "❌ Create failed: " + error.message);
       } else {
         newOrgName.value = "";
         setStatus(orgStatus, "ok", "✅ Organization created.");
@@ -987,7 +922,7 @@
 
       if (error) {
         console.error(error);
-        setStatus(usersStatus, "err", "❌ Could not load users (check profiles admin policy).");
+        setStatus(usersStatus, "err", "❌ Could not load users: " + error.message);
         profilesCache = [];
         renderUsers();
         return;
@@ -1021,14 +956,15 @@
             </select>
           </td>
           <td class="actions">
-            <button class="btn secondary small" data-save="${p.id}" type="button">Save</button>
-            <button class="btn danger small" data-toggle="${p.id}" type="button">
+            <button class="btn secondary" data-save="${p.id}" type="button">Save</button>
+            <button class="btn danger" data-toggle="${p.id}" type="button">
               ${p.is_active ? "Deactivate" : "Reactivate"}
             </button>
           </td>
         </tr>
       `).join("") || `<tr><td colspan="5" class="muted">No profiles found.</td></tr>`;
 
+      // Save handler
       usersBody.querySelectorAll("button[data-save]").forEach(btn => {
         btn.addEventListener("click", async () => {
           const id = btn.getAttribute("data-save");
@@ -1043,7 +979,7 @@
 
           if (error) {
             console.error(error);
-            setStatus(usersStatus, "err", "❌ Save failed. Check profiles admin update policy.");
+            setStatus(usersStatus, "err", "❌ Save failed: " + error.message);
           } else {
             setStatus(usersStatus, "ok", "✅ Updated user profile.");
             await loadUsers();
@@ -1051,6 +987,7 @@
         });
       });
 
+      // Deactivate/reactivate
       usersBody.querySelectorAll("button[data-toggle]").forEach(btn => {
         btn.addEventListener("click", async () => {
           const id = btn.getAttribute("data-toggle");
@@ -1065,7 +1002,6 @@
           if (!userRow) return;
 
           const nextActive = !userRow.is_active;
-
           if (!confirm(`${nextActive ? "Reactivate" : "Deactivate"} this user?`)) return;
 
           setStatus(usersStatus, "ok", "Saving…");
@@ -1077,7 +1013,7 @@
 
           if (error) {
             console.error(error);
-            setStatus(usersStatus, "err", "❌ Update failed (check admin update policy).");
+            setStatus(usersStatus, "err", "❌ Update failed: " + error.message);
           } else {
             setStatus(usersStatus, "ok", `✅ User ${nextActive ? "reactivated" : "deactivated"}.`);
             await loadUsers();
@@ -1098,27 +1034,33 @@
         hide(logoutBtn);
         hide(adminLink);
         hide(adminMaintenance);
+        closeCommentsModal();
         return;
       }
 
       currentUser = session.user;
       await loadProfile(session.user.id);
 
+      // Show admin link only for admins
       if (currentRole === "admin") show(adminLink);
       else hide(adminLink);
 
+      // If non-admin tries to access #admin, bounce them back
       const wantsAdminView = window.location.hash === "#admin";
       if (wantsAdminView && currentRole !== "admin") {
         goToHash("#");
         setStatus(mineStatus, "err", "❌ Admin access required.");
       }
 
+      // Badge
       roleBadge.textContent = `Role: ${String(currentRole || "user").toUpperCase()}`;
 
+      // Show portal
       hide(authCard);
       show(portal);
       show(logoutBtn);
 
+      // Manager/admin ticket panel
       if (currentRole === "manager") {
         show(manageCard);
         manageTitle.textContent = "Team Tickets";
@@ -1131,6 +1073,7 @@
         hide(manageCard);
       }
 
+      // Admin maintenance panel (admins only + only when #admin)
       const wantsAdminView2 = window.location.hash === "#admin";
       if (currentRole === "admin" && wantsAdminView2) {
         show(adminMaintenance);
@@ -1141,6 +1084,7 @@
         hide(adminMaintenance);
       }
 
+      // Load ticket tables
       await loadMyTickets();
       if (currentRole === "manager" || currentRole === "admin") {
         await loadManageTickets();
@@ -1151,10 +1095,12 @@
     const { data: { session } } = await supabase.auth.getSession();
     await setUiForSession(session);
 
+    // Auth events
     supabase.auth.onAuthStateChange(async (_event, newSession) => {
       await setUiForSession(newSession);
     });
 
+    // Hash route changes (so switching works instantly)
     window.addEventListener("hashchange", async () => {
       const { data: { session } } = await supabase.auth.getSession();
       await setUiForSession(session);
@@ -1179,9 +1125,13 @@
     }
 
     loginBtn.addEventListener("click", doLogin);
-    [emailEl, passEl].forEach(el => el.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") doLogin();
-    }));
+
+    // Enter key triggers login
+    [emailEl, passEl].forEach(el => {
+      el.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") doLogin();
+      });
+    });
 
     // Signup
     signupBtn.addEventListener("click", async () => {
@@ -1273,7 +1223,7 @@
         }
       } catch (err) {
         console.error(err);
-        setStatus(submitStatus, "err", "❌ Could not submit ticket (check RLS).");
+        setStatus(submitStatus, "err", "❌ Could not submit ticket: " + (err?.message || "Check RLS."));
       } finally {
         submitBtn.disabled = false;
       }
