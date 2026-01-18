@@ -463,6 +463,8 @@
     // Comments modal state
     let activeTicketId = null;
     let activeTicketSubject = null;
+    const ATTACH_BUCKET = "ticket-attachments";
+
 
     // Tabs
     function activateAdminTab(which){
@@ -535,6 +537,54 @@
       loadComments(ticketId);
     }
 
+    function safeFileName(name){
+  // keep it readable, remove weird chars
+  return String(name || "file")
+    .replace(/[^a-zA-Z0-9.\-_ ]+/g, "_")
+    .replace(/\s+/g, "_")
+    .slice(0, 120);
+}
+
+async function uploadOneAttachment({ ticketId, commentId, file, userId }){
+  const fileName = safeFileName(file.name);
+  const ext = (fileName.split(".").pop() || "").toLowerCase();
+  const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+
+  // path format: ticketId/commentId/userId_timestamp_filename
+  const storagePath = `${ticketId}/${commentId}/${userId}_${stamp}_${fileName}`;
+
+  // Upload to storage (bucket must exist)
+  const { error: upErr } = await supabase.storage
+    .from(ATTACH_BUCKET)
+    .upload(storagePath, file, {
+      cacheControl: "3600",
+      upsert: false,
+      contentType: file.type || "application/octet-stream",
+    });
+
+  if (upErr) throw upErr;
+
+  // Insert metadata row into DB table
+  const row = {
+    ticket_id: ticketId,
+    comment_id: commentId,
+    storage_path: storagePath,
+    file_name: fileName,
+    mime_type: file.type || null,
+    file_size: file.size || null,
+    created_by: userId,
+  };
+
+  const { error: insErr } = await supabase
+    .from("ticket_comment_attachments")
+    .insert(row);
+
+  if (insErr) throw insErr;
+
+  return row;
+}
+
+
     function closeCommentsModal(){
       hide(commentsOverlay);
       commentsOverlay.setAttribute("aria-hidden", "true");
@@ -570,6 +620,95 @@ async function loadComments(ticketId){
     return;
   }
 
+addCommentBtn.addEventListener("click", async () => {
+  clearStatus(commentsStatus);
+
+  const ticketId = activeTicketId;
+  const text = (newCommentText.value || "").trim();
+  const files = Array.from(commentFiles?.files || []);
+
+  if (!ticketId) {
+    setStatus(commentsStatus, "err", "❌ No active ticket.");
+    return;
+  }
+  if (!text && files.length === 0) {
+    setStatus(commentsStatus, "err", "❌ Type a comment or attach a file.");
+    return;
+  }
+
+  const { data: { session } } = await supabase.auth.getSession();
+  const user = session?.user;
+  if (!user) {
+    setStatus(commentsStatus, "err", "❌ Please login first.");
+    return;
+  }
+
+  // Optional: limit total files / size
+  const MAX_FILES = 5;
+  const MAX_MB_EACH = 10;
+  if (files.length > MAX_FILES) {
+    setStatus(commentsStatus, "err", `❌ Max ${MAX_FILES} files per comment.`);
+    return;
+  }
+  for (const f of files) {
+    if (f.size > MAX_MB_EACH * 1024 * 1024) {
+      setStatus(commentsStatus, "err", `❌ "${f.name}" is too large (max ${MAX_MB_EACH}MB).`);
+      return;
+    }
+  }
+
+  try {
+    addCommentBtn.disabled = true;
+    setStatus(commentsStatus, "ok", "Saving comment…");
+
+    // 1) Insert comment row first (we need comment_id)
+    const { data: cRow, error: cErr } = await supabase
+      .from("ticket_comments")
+      .insert({
+        ticket_id: ticketId,
+        author_id: user.id,
+        author_email: user.email,
+        comment: text || "(attachment)",
+      })
+      .select("id")
+      .single();
+
+    if (cErr) throw cErr;
+
+    const commentId = cRow.id;
+
+    // 2) Upload attachments + insert attachment rows
+    if (files.length > 0) {
+      setStatus(commentsStatus, "ok", `Uploading ${files.length} file(s)…`);
+      for (const file of files) {
+        await uploadOneAttachment({
+          ticketId,
+          commentId,
+          file,
+          userId: user.id,
+        });
+      }
+    }
+
+    // 3) Done -> reset UI + reload
+    newCommentText.value = "";
+    if (commentFiles) commentFiles.value = ""; // clear file picker
+    setStatus(commentsStatus, "ok", "✅ Comment added.");
+    await loadComments(ticketId);
+
+  } catch (err) {
+    console.error("addComment error:", err);
+    setStatus(commentsStatus, "err", "❌ Could not add comment: " + (err?.message || "Check RLS/Storage policies."));
+  } finally {
+    addCommentBtn.disabled = false;
+  }
+});
+
+refreshCommentsBtn.addEventListener("click", () => {
+  if (activeTicketId) loadComments(activeTicketId);
+});
+
+  
   // Pull all attachments for this ticket (we’ll group by comment_id)
   const { data: atts, error: aErr } = await supabase
     .from("ticket_comment_attachments")
