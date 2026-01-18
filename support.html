@@ -613,6 +613,14 @@
         commentText.value = "";
         await loadComments(activeTicketId);
         // optional: refresh tables if you later add comment counts
+
+        if (error) {
+        console.error("ticket_comments insert error:", error);
+        setStatus(commentsStatus, "err", "❌ " + (error.message || JSON.stringify(error)));
+        return;
+        }
+
+        
       }
 
       addCommentBtn.disabled = false;
