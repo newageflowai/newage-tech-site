@@ -38,7 +38,10 @@
     .btn.secondary{
       background:transparent;border:1px solid rgba(255,255,255,.16);color:var(--text);font-weight:650
     }
-    .btn.danger:hover{ background: rgba(255,106,26,.10); }
+    .btn.danger{
+      background:transparent;border:1px solid rgba(255,106,26,.35);color:rgba(243,246,255,.92);
+      font-weight:650
+    }
     .btn:disabled{opacity:.65;cursor:not-allowed}
     .actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
     .status{margin-top:12px;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.03);display:none}
@@ -65,7 +68,7 @@
     .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
     @media(max-width:980px){.grid2{grid-template-columns:1fr}}
 
-    /* ===== Modals ===== */
+    /* ===== Modal ===== */
     .modalOverlay{
       position:fixed; inset:0;
       background:rgba(0,0,0,.55);
@@ -185,7 +188,7 @@
           </form>
 
           <div class="muted" style="margin-top:10px">
-            Tip: Use your email account per company so managers can group tickets by organization.
+            Tip: Use your company email so tickets can be grouped by organization.
           </div>
         </div>
 
@@ -194,7 +197,7 @@
           <div class="actions" style="justify-content:space-between">
             <div>
               <h2 style="margin:0">My Tickets</h2>
-              <div class="muted">You only see tickets you created.</div>
+              <div class="muted">You see tickets where your email is the requester.</div>
             </div>
             <button id="refreshMineBtn" class="btn secondary" type="button">Refresh</button>
           </div>
@@ -208,6 +211,7 @@
                   <th>Subject</th>
                   <th>Priority</th>
                   <th>Status</th>
+                  <th>Organization</th>
                   <th>Ticket ID</th>
                   <th>Comments</th>
                 </tr>
@@ -329,59 +333,6 @@
     </div>
   </div>
 
-  <!-- CREATE TICKET MODAL (ADMIN) -->
-  <div id="createTicketOverlay" class="modalOverlay hide" aria-hidden="true">
-    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="createTicketTitle">
-      <div class="modalHeader">
-        <div>
-          <h2 id="createTicketTitle" style="margin:0">Create Ticket (Admin)</h2>
-          <div class="muted">Create a ticket for a selected requester. Assigned to the logged-in admin.</div>
-        </div>
-        <button id="closeCreateTicketBtn" class="smallBtn" type="button">Close</button>
-      </div>
-
-      <div id="createTicketStatus" class="status" role="status" aria-live="polite"></div>
-
-      <div class="row">
-        <div>
-          <label for="ctRequesterEmail">Requester Email (User)</label>
-          <select id="ctRequesterEmail"></select>
-        </div>
-        <div>
-          <label for="ctAssigneeEmail">Assign To (Admin)</label>
-          <input id="ctAssigneeEmail" type="email" readonly />
-        </div>
-      </div>
-
-      <div class="row">
-        <div>
-          <label for="ctOrg">Organization</label>
-          <select id="ctOrg"></select>
-        </div>
-        <div>
-          <label for="ctPriority">Priority</label>
-          <select id="ctPriority">
-            <option value="low">Low</option>
-            <option value="normal" selected>Normal</option>
-            <option value="high">High</option>
-            <option value="urgent">Urgent</option>
-          </select>
-        </div>
-      </div>
-
-      <label for="ctSubject">Subject</label>
-      <input id="ctSubject" placeholder="Short summary" />
-
-      <label for="ctDesc">Description</label>
-      <textarea id="ctDesc" placeholder="What’s happening? Include details."></textarea>
-
-      <div class="actions" style="margin-top:10px">
-        <button id="ctSubmitBtn" class="btn" type="button">Create Ticket</button>
-        <button id="ctCancelBtn" class="btn secondary" type="button">Cancel</button>
-      </div>
-    </div>
-  </div>
-
   <!-- COMMENTS MODAL -->
   <div id="commentsOverlay" class="modalOverlay hide" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="commentsTitle">
@@ -410,6 +361,59 @@
           <button id="addCommentBtn" class="btn" type="button">Add Comment</button>
           <button id="refreshCommentsBtn" class="btn secondary" type="button">Refresh</button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CREATE TICKET MODAL (ADMIN) -->
+  <div id="createTicketOverlay" class="modalOverlay hide" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="createTicketTitle">
+      <div class="modalHeader">
+        <div>
+          <h2 id="createTicketTitle" style="margin:0">Create Ticket (Admin)</h2>
+          <div class="muted">Create a ticket for a user. “Assign to” is your admin email.</div>
+        </div>
+        <button id="closeCreateTicketBtn" class="smallBtn" type="button">Close</button>
+      </div>
+
+      <div id="createTicketStatus" class="status" role="status" aria-live="polite"></div>
+
+      <div class="row">
+        <div>
+          <label for="ctRequesterEmail">Requester (User)</label>
+          <select id="ctRequesterEmail"></select>
+        </div>
+        <div>
+          <label for="ctAssigneeEmail">Assign To (Admin)</label>
+          <input id="ctAssigneeEmail" type="email" disabled />
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label for="ctOrg">Organization</label>
+          <select id="ctOrg"></select>
+        </div>
+        <div>
+          <label for="ctPriority">Priority</label>
+          <select id="ctPriority">
+            <option value="low">Low</option>
+            <option value="normal" selected>Normal</option>
+            <option value="high">High</option>
+            <option value="urgent">Urgent</option>
+          </select>
+        </div>
+      </div>
+
+      <label for="ctSubject">Subject</label>
+      <input id="ctSubject" placeholder="Short summary" />
+
+      <label for="ctDesc">Description</label>
+      <textarea id="ctDesc" placeholder="What’s happening? Include details."></textarea>
+
+      <div class="actions" style="margin-top:10px">
+        <button id="ctSubmitBtn" class="btn" type="button">Create Ticket</button>
+        <button id="ctCancelBtn" class="btn secondary" type="button">Cancel</button>
       </div>
     </div>
   </div>
@@ -477,22 +481,21 @@
     const refreshCommentsBtn = document.getElementById("refreshCommentsBtn");
     const commentFiles = document.getElementById("commentFiles");
 
-    // Admin create ticket modal
+    // Admin create ticket modal elements
     const createTicketBtn = document.getElementById("createTicketBtn");
     const createTicketOverlay = document.getElementById("createTicketOverlay");
     const closeCreateTicketBtn = document.getElementById("closeCreateTicketBtn");
     const ctCancelBtn = document.getElementById("ctCancelBtn");
     const createTicketStatus = document.getElementById("createTicketStatus");
 
-    const ctRequesterEmail = document.getElementById("ctRequesterEmail"); // SELECT
-    const ctAssigneeEmail = document.getElementById("ctAssigneeEmail");   // readonly input (admin email)
+    const ctRequesterEmail = document.getElementById("ctRequesterEmail"); // ✅ user dropdown
+    const ctAssigneeEmail = document.getElementById("ctAssigneeEmail");   // ✅ admin email (disabled)
     const ctOrg = document.getElementById("ctOrg");
     const ctPriority = document.getElementById("ctPriority");
     const ctSubject = document.getElementById("ctSubject");
     const ctDesc = document.getElementById("ctDesc");
     const ctSubmitBtn = document.getElementById("ctSubmitBtn");
 
-    // Helpers
     function show(el){ el.classList.remove("hide"); }
     function hide(el){ el.classList.add("hide"); }
 
@@ -515,13 +518,10 @@
     }
     function pill(status){
       const s = status || "open";
-      return `<span class="pill ${s}">${s.charAt(0).ToUpperCase ? s.charAt(0).ToUpperCase() + s.slice(1) : (s.charAt(0).toUpperCase() + s.slice(1))}</span>`;
+      return `<span class="pill ${s}">${s.charAt(0).toUpperCase() + s.slice(1)}</span>`;
     }
     function goToHash(hash){
       if (window.location.hash !== hash) window.location.hash = hash;
-    }
-    function isValidEmail(email){
-      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || "").trim());
     }
 
     // State
@@ -531,53 +531,12 @@
 
     // Cache
     let orgsCache = [];
-    let profilesCache = [];
+    let profilesCache = []; // used for user dropdown in admin create ticket
+    const ATTACH_BUCKET = "ticket-attachments";
 
     // Comments modal state
     let activeTicketId = null;
-
-    // Storage bucket name
-    const ATTACH_BUCKET = "ticket-attachments";
-
-    // ===== Admin Create Ticket dropdowns =====
-    function renderRequesterDropdown(selectedEmail = ""){
-      const emails = (profilesCache || [])
-        .map(p => String(p.email || "").trim())
-        .filter(e => e && isValidEmail(e))
-        .sort((a,b) => a.localeCompare(b));
-
-      ctRequesterEmail.innerHTML =
-        `<option value="">(select requester)</option>` +
-        emails.map(email => `<option value="${escapeHtml(email)}" ${email===selectedEmail?"selected":""}>${escapeHtml(email)}</option>`).join("");
-    }
-
-    function openCreateTicketModal(){
-      clearStatus(createTicketStatus);
-
-      // requester dropdown from DB
-      renderRequesterDropdown("");
-
-      // assignee is logged-in admin
-      ctAssigneeEmail.value = (currentUser?.email || "").trim();
-
-      // org dropdown
-      ctOrg.innerHTML = `<option value="">(select org)</option>` +
-        (orgsCache || []).map(o => `<option value="${o.id}">${escapeHtml(o.name)}</option>`).join("");
-
-      // reset fields
-      ctSubject.value = "";
-      ctDesc.value = "";
-      ctPriority.value = "normal";
-
-      show(createTicketOverlay);
-      createTicketOverlay.setAttribute("aria-hidden", "false");
-    }
-
-    function closeCreateTicketModal(){
-      hide(createTicketOverlay);
-      createTicketOverlay.setAttribute("aria-hidden", "true");
-      clearStatus(createTicketStatus);
-    }
+    let activeTicketSubject = null;
 
     // Tabs
     function activateAdminTab(which){
@@ -597,11 +556,12 @@
     tabOrgs.addEventListener("click", () => activateAdminTab("orgs"));
     tabUsers.addEventListener("click", () => activateAdminTab("users"));
 
-    // Robust profile loader
+    // Profile loader
     async function loadProfile(userId){
       currentRole = "user";
       currentOrgId = null;
 
+      // Try with is_active; fallback if missing
       let res = await supabase
         .from("profiles")
         .select("role, org_id, is_active")
@@ -634,11 +594,12 @@
       currentOrgId = data?.org_id || null;
     }
 
-    // ===== COMMENTS (ticket_comments) =====
+    // ===== COMMENTS =====
     function openCommentsModal(ticketId, subject){
       activeTicketId = ticketId;
-      document.getElementById("commentsTicketLine").textContent = `Ticket: ${ticketId}${subject ? " • " + subject : ""}`;
-      document.getElementById("newCommentText").value = "";
+      activeTicketSubject = subject || "";
+      commentsTicketLine.textContent = `Ticket: ${ticketId}${subject ? " • " + subject : ""}`;
+      newCommentText.value = "";
       if (commentFiles) commentFiles.value = "";
       clearStatus(commentsStatus);
       show(commentsOverlay);
@@ -650,9 +611,10 @@
       hide(commentsOverlay);
       commentsOverlay.setAttribute("aria-hidden", "true");
       activeTicketId = null;
+      activeTicketSubject = null;
       commentsList.innerHTML = `<div class="muted">—</div>`;
       clearStatus(commentsStatus);
-      document.getElementById("newCommentText").value = "";
+      newCommentText.value = "";
       if (commentFiles) commentFiles.value = "";
     }
 
@@ -662,7 +624,6 @@
     });
     window.addEventListener("keydown", (e) => {
       if (e.key === "Escape" && !commentsOverlay.classList.contains("hide")) closeCommentsModal();
-      if (e.key === "Escape" && !createTicketOverlay.classList.contains("hide")) closeCreateTicketModal();
     });
 
     function safeFileName(name){
@@ -794,7 +755,6 @@
       });
     }
 
-    // Add Comment
     addCommentBtn.addEventListener("click", async () => {
       clearStatus(commentsStatus);
 
@@ -809,15 +769,9 @@
       const user = session?.user;
       if (!user) return setStatus(commentsStatus, "err", "❌ Please login first.");
 
-      const MAX_FILES = 5;
-      const MAX_MB_EACH = 10;
-
+      const MAX_FILES = 5, MAX_MB_EACH = 10;
       if (files.length > MAX_FILES) return setStatus(commentsStatus, "err", `❌ Max ${MAX_FILES} files per comment.`);
-      for (const f of files) {
-        if (f.size > MAX_MB_EACH * 1024 * 1024) {
-          return setStatus(commentsStatus, "err", `❌ "${f.name}" is too large (max ${MAX_MB_EACH}MB).`);
-        }
-      }
+      for (const f of files) if (f.size > MAX_MB_EACH * 1024 * 1024) return setStatus(commentsStatus, "err", `❌ "${f.name}" is too large (max ${MAX_MB_EACH}MB).`);
 
       try {
         addCommentBtn.disabled = true;
@@ -839,16 +793,13 @@
 
         if (files.length > 0) {
           setStatus(commentsStatus, "ok", `Uploading ${files.length} file(s)…`);
-          for (const file of files) {
-            await uploadOneAttachment({ ticketId, commentId, file, user });
-          }
+          for (const file of files) await uploadOneAttachment({ ticketId, commentId, file, user });
         }
 
         newCommentText.value = "";
         if (commentFiles) commentFiles.value = "";
         setStatus(commentsStatus, "ok", "✅ Comment added.");
         await loadComments(ticketId);
-
       } catch (err) {
         console.error("addComment error:", err);
         setStatus(commentsStatus, "err", "❌ Could not add comment: " + (err?.message || "Check RLS/Storage policies."));
@@ -861,20 +812,78 @@
       if (activeTicketId) loadComments(activeTicketId);
     });
 
-    // ===== Tickets =====
+    // ===== DATA LOADERS =====
+    async function loadOrganizations(){
+      const { data, error } = await supabase
+        .from("organizations")
+        .select("id, name")
+        .order("name", { ascending: true });
+
+      if (error) {
+        console.error(error);
+        orgsCache = [];
+      } else {
+        orgsCache = data || [];
+      }
+    }
+
+    async function loadProfilesForDropdown(){
+      // NOTE: relies on your admin RLS allowing profiles select for admins.
+      // We fetch active users with emails.
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, email, is_active")
+        .order("email", { ascending: true });
+
+      if (error) {
+        console.error(error);
+        profilesCache = [];
+      } else {
+        profilesCache = (data || []).filter(p => p.email && p.is_active !== false);
+      }
+    }
+
+    function fillOrgDropdown(selectEl, selectedId = ""){
+      selectEl.innerHTML =
+        `<option value="">(select org)</option>` +
+        orgsCache.map(o => `<option value="${o.id}" ${o.id===selectedId?"selected":""}>${escapeHtml(o.name)}</option>`).join("");
+    }
+
+    function fillUserEmailDropdown(selectEl, selectedEmail = ""){
+      selectEl.innerHTML =
+        `<option value="">(select user email)</option>` +
+        profilesCache.map(p => `<option value="${escapeHtml(p.email)}" ${p.email===selectedEmail?"selected":""}>${escapeHtml(p.email)}</option>`).join("");
+    }
+
+    function orgNameById(id){
+      const found = orgsCache.find(o => o.id === id);
+      return found?.name || id || "";
+    }
+
+    // ===== My Tickets =====
     async function loadMyTickets(){
       clearStatus(mineStatus);
       mineBody.innerHTML = "";
 
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
+      if (!user) return;
+
+      // ✅ IMPORTANT: show tickets where requester_email == my email
       const { data, error } = await supabase
         .from("tickets")
-        .select("id, created_at, subject, priority, status")
+        .select("id, created_at, subject, priority, status, org_id")
+        .eq("requester_email", user.email)
         .order("created_at", { ascending: false });
 
-      if (error) return setStatus(mineStatus, "err", "❌ Could not load your tickets.");
+      if (error) {
+        console.error(error);
+        setStatus(mineStatus, "err", "❌ Could not load your tickets.");
+        return;
+      }
 
       if (!data || data.length === 0) {
-        mineBody.innerHTML = `<tr><td colspan="6" class="muted">No tickets yet.</td></tr>`;
+        mineBody.innerHTML = `<tr><td colspan="7" class="muted">No tickets yet.</td></tr>`;
         return;
       }
 
@@ -884,26 +893,38 @@
           <td>${escapeHtml(t.subject)}</td>
           <td>${escapeHtml(t.priority)}</td>
           <td>${pill(t.status)}</td>
+          <td>${escapeHtml(orgNameById(t.org_id))}</td>
           <td class="mono">${t.id}</td>
-          <td><button class="smallBtn" type="button" data-comments="${t.id}" data-subject="${escapeHtml(t.subject)}">Comments</button></td>
+          <td>
+            <button class="smallBtn" type="button" data-comments="${t.id}" data-subject="${escapeHtml(t.subject)}">Comments</button>
+          </td>
         </tr>
       `).join("");
 
       mineBody.querySelectorAll("button[data-comments]").forEach(btn => {
-        btn.addEventListener("click", () => openCommentsModal(btn.dataset.comments, btn.dataset.subject || ""));
+        btn.addEventListener("click", () => {
+          const id = btn.getAttribute("data-comments");
+          const subj = btn.getAttribute("data-subject") || "";
+          openCommentsModal(id, subj);
+        });
       });
     }
 
+    // ===== Manage Tickets =====
     async function loadManageTickets(){
       clearStatus(manageStatus);
       manageBody.innerHTML = "";
 
       const { data, error } = await supabase
         .from("tickets")
-        .select("id, created_at, requester_email, subject, priority, status, hours_worked")
+        .select("id, created_at, requester_email, subject, priority, status, hours_worked, org_id, assigned_to_email")
         .order("created_at", { ascending: false });
 
-      if (error) return setStatus(manageStatus, "err", "❌ Could not load manage tickets (check RLS role/org).");
+      if (error) {
+        console.error(error);
+        setStatus(manageStatus, "err", "❌ Could not load manage tickets (check RLS role/org).");
+        return;
+      }
 
       if (!data || data.length === 0) {
         manageBody.innerHTML = `<tr><td colspan="7" class="muted">No tickets available for your role.</td></tr>`;
@@ -920,6 +941,7 @@
             <td>${escapeHtml(t.requester_email || "")}</td>
             <td>${escapeHtml(t.subject)}</td>
             <td>${escapeHtml(t.priority)}</td>
+
             <td>
               <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
                 <select data-id="${t.id}" data-field="status">
@@ -927,48 +949,88 @@
                   <option value="working" ${t.status==="working"?"selected":""}>working</option>
                   <option value="complete" ${t.status==="complete"?"selected":""}>complete</option>
                 </select>
+
                 ${showHours ? `
-                  <input data-id="${t.id}" data-field="hours" type="number" min="0" step="0.25" style="max-width:120px" value="${hoursVal}" />
+                  <input
+                    data-id="${t.id}"
+                    data-field="hours"
+                    type="number"
+                    min="0"
+                    step="0.25"
+                    style="max-width:120px"
+                    value="${hoursVal}"
+                    title="Hours worked"
+                  />
                   <button class="smallBtn" type="button" data-save="${t.id}">Save</button>
                 ` : ``}
               </div>
+              <div class="muted" style="margin-top:6px">
+                Org: ${escapeHtml(orgNameById(t.org_id))}${t.assigned_to_email ? " • Assigned: " + escapeHtml(t.assigned_to_email) : ""}
+              </div>
             </td>
+
             <td class="mono">${t.id}</td>
-            <td><button class="smallBtn" type="button" data-comments="${t.id}" data-subject="${escapeHtml(t.subject)}">Comments</button></td>
+
+            <td>
+              <button class="smallBtn" type="button" data-comments="${t.id}" data-subject="${escapeHtml(t.subject)}">Comments</button>
+            </td>
           </tr>
         `;
       }).join("");
 
       manageBody.querySelectorAll("button[data-comments]").forEach(btn => {
-        btn.addEventListener("click", () => openCommentsModal(btn.dataset.comments, btn.dataset.subject || ""));
+        btn.addEventListener("click", () => {
+          const id = btn.getAttribute("data-comments");
+          const subj = btn.getAttribute("data-subject") || "";
+          openCommentsModal(id, subj);
+        });
       });
 
       manageBody.querySelectorAll('select[data-field="status"][data-id]').forEach(sel => {
         sel.addEventListener("change", async () => {
-          const id = sel.dataset.id;
+          const id = sel.getAttribute("data-id");
           const status = sel.value;
+
           setStatus(manageStatus, "ok", "Updating status…");
-          const { error } = await supabase.from("tickets").update({ status }).eq("id", id);
-          if (error) setStatus(manageStatus, "err", "❌ Status update failed: " + error.message);
-          else setStatus(manageStatus, "ok", "✅ Status updated.");
+          const { error } = await supabase
+            .from("tickets")
+            .update({ status })
+            .eq("id", id);
+
+          if (error) {
+            console.error(error);
+            setStatus(manageStatus, "err", "❌ Status update failed: " + error.message);
+          } else {
+            setStatus(manageStatus, "ok", "✅ Status updated.");
+          }
         });
       });
 
       if (currentRole === "admin") {
         manageBody.querySelectorAll('button[data-save]').forEach(btn => {
           btn.addEventListener("click", async () => {
-            const id = btn.dataset.save;
+            const id = btn.getAttribute("data-save");
             const statusSel = manageBody.querySelector(`select[data-field="status"][data-id="${id}"]`);
             const hoursInput = manageBody.querySelector(`input[data-field="hours"][data-id="${id}"]`);
+
             const status = statusSel?.value || "open";
             const hours = Number(hoursInput?.value ?? 0);
 
-            if (!Number.isFinite(hours) || hours < 0) return setStatus(manageStatus, "err", "❌ Hours must be 0 or more.");
+            if (!Number.isFinite(hours) || hours < 0) {
+              setStatus(manageStatus, "err", "❌ Hours must be 0 or more.");
+              return;
+            }
 
             setStatus(manageStatus, "ok", "Saving…");
-            const { error } = await supabase.from("tickets").update({ status, hours_worked: hours }).eq("id", id);
-            if (error) setStatus(manageStatus, "err", "❌ Save failed: " + error.message);
-            else {
+            const { error } = await supabase
+              .from("tickets")
+              .update({ status, hours_worked: hours })
+              .eq("id", id);
+
+            if (error) {
+              console.error(error);
+              setStatus(manageStatus, "err", "❌ Save failed: " + error.message);
+            } else {
               setStatus(manageStatus, "ok", "✅ Saved status + hours.");
               await loadManageTickets();
             }
@@ -977,110 +1039,33 @@
       }
     }
 
-    // ===== ADMIN MAINTENANCE =====
-    async function loadOrganizations(){
-      clearStatus(orgStatus);
-      const { data, error } = await supabase.from("organizations").select("id, name").order("name", { ascending: true });
-      if (error) {
-        setStatus(orgStatus, "err", "❌ Could not load organizations (check org RLS).");
-        orgsCache = [];
-        return renderOrganizations();
-      }
-      orgsCache = data || [];
-      renderOrganizations();
-    }
-
-    function renderOrganizations(){
-      orgsBody.innerHTML = (orgsCache.length ? orgsCache : []).map(o => `
-        <tr>
-          <td>${escapeHtml(o.name)}</td>
-          <td class="mono">${o.id}</td>
-          <td class="actions">
-            <button class="btn secondary" data-rename="${o.id}" type="button">Rename</button>
-            <button class="btn danger" data-delete="${o.id}" type="button">Delete</button>
-          </td>
-        </tr>
-      `).join("") || `<tr><td colspan="3" class="muted">No organizations yet.</td></tr>`;
-
-      orgsBody.querySelectorAll("button[data-rename]").forEach(btn => {
-        btn.addEventListener("click", async () => {
-          const id = btn.dataset.rename;
-          const cur = orgsCache.find(x => x.id === id);
-          const newName = prompt("Rename organization:", cur?.name || "");
-          if (!newName) return;
-
-          setStatus(orgStatus, "ok", "Updating…");
-          const { error } = await supabase.from("organizations").update({ name: newName.trim() }).eq("id", id);
-          if (error) setStatus(orgStatus, "err", "❌ Rename failed: " + error.message);
-          else {
-            setStatus(orgStatus, "ok", "✅ Organization renamed.");
-            await loadOrganizations();
-            await loadUsers();
-          }
-        });
-      });
-
-      orgsBody.querySelectorAll("button[data-delete]").forEach(btn => {
-        btn.addEventListener("click", async () => {
-          const id = btn.dataset.delete;
-          const cur = orgsCache.find(x => x.id === id);
-          if (!confirm(`Delete organization "${cur?.name}"?`)) return;
-
-          setStatus(orgStatus, "ok", "Deleting…");
-          const { error } = await supabase.from("organizations").delete().eq("id", id);
-          if (error) setStatus(orgStatus, "err", "❌ Delete failed. Unlink users/tickets from this org first.");
-          else {
-            setStatus(orgStatus, "ok", "✅ Organization deleted.");
-            await loadOrganizations();
-            await loadUsers();
-          }
-        });
-      });
-    }
-
-    createOrgBtn.addEventListener("click", async () => {
-      const name = newOrgName.value.trim();
-      if (!name) return;
-
-      setStatus(orgStatus, "ok", "Creating…");
-      const { error } = await supabase.from("organizations").insert({ name });
-      if (error) setStatus(orgStatus, "err", "❌ Create failed: " + error.message);
-      else {
-        newOrgName.value = "";
-        setStatus(orgStatus, "ok", "✅ Organization created.");
-        await loadOrganizations();
-      }
-    });
-
-    refreshOrgsBtn.addEventListener("click", loadOrganizations);
-
+    // ===== ADMIN MAINTENANCE (Orgs + Users) =====
     async function loadUsers(){
       clearStatus(usersStatus);
+      usersBody.innerHTML = "";
+
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, email, role, org_id, is_active")
+        .select("id, email, role, org_id, is_active, created_at")
         .order("created_at", { ascending: false });
 
       if (error) {
+        console.error(error);
         setStatus(usersStatus, "err", "❌ Could not load users: " + error.message);
         profilesCache = [];
         renderUsers();
         return;
       }
 
+      // cache also powers admin create ticket dropdown
       profilesCache = data || [];
       renderUsers();
-
-      // keep admin modal requester list fresh too
-      if (currentRole === "admin") {
-        renderRequesterDropdown(ctRequesterEmail.value || "");
-      }
     }
 
     function orgOptions(selectedId){
-      return [`<option value="">(none)</option>`]
-        .concat(orgsCache.map(o => `<option value="${o.id}" ${o.id===selectedId?"selected":""}>${escapeHtml(o.name)}</option>`))
-        .join("");
+      const opts = [`<option value="">(none)</option>`]
+        .concat(orgsCache.map(o => `<option value="${o.id}" ${o.id===selectedId?"selected":""}>${escapeHtml(o.name)}</option>`));
+      return opts.join("");
     }
 
     function renderUsers(){
@@ -1103,7 +1088,7 @@
           <td class="actions">
             <button class="btn secondary" data-save="${p.id}" type="button">Save</button>
             <button class="btn danger" data-toggle="${p.id}" type="button">
-              ${p.is_active ? "Deactivate" : "Reactivate"}
+              ${p.is_active === false ? "Reactivate" : "Deactivate"}
             </button>
           </td>
         </tr>
@@ -1111,14 +1096,20 @@
 
       usersBody.querySelectorAll("button[data-save]").forEach(btn => {
         btn.addEventListener("click", async () => {
-          const id = btn.dataset.save;
+          const id = btn.getAttribute("data-save");
           const role = usersBody.querySelector(`select[data-role="${id}"]`).value;
           const orgId = usersBody.querySelector(`select[data-org="${id}"]`).value || null;
 
           setStatus(usersStatus, "ok", "Saving…");
-          const { error } = await supabase.from("profiles").update({ role, org_id: orgId }).eq("id", id);
-          if (error) setStatus(usersStatus, "err", "❌ Save failed: " + error.message);
-          else {
+          const { error } = await supabase
+            .from("profiles")
+            .update({ role, org_id: orgId })
+            .eq("id", id);
+
+          if (error) {
+            console.error(error);
+            setStatus(usersStatus, "err", "❌ Save failed: " + error.message);
+          } else {
             setStatus(usersStatus, "ok", "✅ Updated user profile.");
             await loadUsers();
           }
@@ -1127,26 +1118,240 @@
 
       usersBody.querySelectorAll("button[data-toggle]").forEach(btn => {
         btn.addEventListener("click", async () => {
-          const id = btn.dataset.toggle;
+          const id = btn.getAttribute("data-toggle");
+
           const { data: { session } } = await supabase.auth.getSession();
-          if (session?.user?.id === id) return alert("You cannot deactivate your own account from here.");
+          if (session?.user?.id === id) {
+            alert("You cannot deactivate your own account from here.");
+            return;
+          }
 
           const userRow = profilesCache.find(x => x.id === id);
           if (!userRow) return;
 
-          const nextActive = !userRow.is_active;
+          const nextActive = (userRow.is_active === false) ? true : false;
           if (!confirm(`${nextActive ? "Reactivate" : "Deactivate"} this user?`)) return;
 
           setStatus(usersStatus, "ok", "Saving…");
-          const { error } = await supabase.from("profiles").update({ is_active: nextActive }).eq("id", id);
-          if (error) setStatus(usersStatus, "err", "❌ Update failed: " + error.message);
-          else {
+
+          const { error } = await supabase
+            .from("profiles")
+            .update({ is_active: nextActive })
+            .eq("id", id);
+
+          if (error) {
+            console.error(error);
+            setStatus(usersStatus, "err", "❌ Update failed: " + error.message);
+          } else {
             setStatus(usersStatus, "ok", `✅ User ${nextActive ? "reactivated" : "deactivated"}.`);
             await loadUsers();
           }
         });
       });
     }
+
+    async function loadOrganizationsForAdminPanel(){
+      clearStatus(orgStatus);
+      const { data, error } = await supabase
+        .from("organizations")
+        .select("id, name")
+        .order("name", { ascending: true });
+
+      if (error) {
+        console.error(error);
+        setStatus(orgStatus, "err", "❌ Could not load organizations (check RLS).");
+        orgsCache = [];
+        renderOrganizations();
+        return;
+      }
+
+      orgsCache = data || [];
+      renderOrganizations();
+    }
+
+    function renderOrganizations(){
+      orgsBody.innerHTML = (orgsCache.length ? orgsCache : []).map(o => `
+        <tr>
+          <td>${escapeHtml(o.name)}</td>
+          <td class="mono">${o.id}</td>
+          <td class="actions">
+            <button class="btn secondary" data-rename="${o.id}" type="button">Rename</button>
+            <button class="btn danger" data-delete="${o.id}" type="button">Delete</button>
+          </td>
+        </tr>
+      `).join("") || `<tr><td colspan="3" class="muted">No organizations yet.</td></tr>`;
+
+      orgsBody.querySelectorAll("button[data-rename]").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const id = btn.getAttribute("data-rename");
+          const cur = orgsCache.find(x => x.id === id);
+          const newName = prompt("Rename organization:", cur?.name || "");
+          if (!newName) return;
+
+          setStatus(orgStatus, "ok", "Updating…");
+          const { error } = await supabase
+            .from("organizations")
+            .update({ name: newName.trim() })
+            .eq("id", id);
+
+          if (error) {
+            console.error(error);
+            setStatus(orgStatus, "err", "❌ Rename failed: " + error.message);
+          } else {
+            setStatus(orgStatus, "ok", "✅ Organization renamed.");
+            await loadOrganizationsForAdminPanel();
+            await loadUsers();
+            await loadMyTickets();
+          }
+        });
+      });
+
+      orgsBody.querySelectorAll("button[data-delete]").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const id = btn.getAttribute("data-delete");
+          const cur = orgsCache.find(x => x.id === id);
+          if (!confirm(`Delete organization "${cur?.name}"?`)) return;
+
+          setStatus(orgStatus, "ok", "Deleting…");
+          const { error } = await supabase
+            .from("organizations")
+            .delete()
+            .eq("id", id);
+
+          if (error) {
+            console.error(error);
+            setStatus(orgStatus, "err", "❌ Delete failed. Unlink users/tickets from this org first.");
+          } else {
+            setStatus(orgStatus, "ok", "✅ Organization deleted.");
+            await loadOrganizationsForAdminPanel();
+            await loadUsers();
+            await loadMyTickets();
+          }
+        });
+      });
+    }
+
+    createOrgBtn.addEventListener("click", async () => {
+      const name = newOrgName.value.trim();
+      if (!name) return;
+
+      clearStatus(orgStatus);
+      setStatus(orgStatus, "ok", "Creating…");
+
+      const { error } = await supabase
+        .from("organizations")
+        .insert({ name });
+
+      if (error) {
+        console.error(error);
+        setStatus(orgStatus, "err", "❌ Create failed: " + error.message);
+      } else {
+        newOrgName.value = "";
+        setStatus(orgStatus, "ok", "✅ Organization created.");
+        await loadOrganizationsForAdminPanel();
+        await loadMyTickets();
+      }
+    });
+
+    refreshOrgsBtn.addEventListener("click", loadOrganizationsForAdminPanel);
+    refreshUsersBtn.addEventListener("click", loadUsers);
+
+    // ===== ADMIN CREATE TICKET MODAL =====
+    function openCreateTicketModal(){
+      clearStatus(createTicketStatus);
+
+      ctSubject.value = "";
+      ctDesc.value = "";
+      ctPriority.value = "normal";
+
+      // org dropdown
+      fillOrgDropdown(ctOrg, "");
+      // user dropdown (requester)
+      fillUserEmailDropdown(ctRequesterEmail, "");
+
+      // assign-to is the logged-in admin email
+      ctAssigneeEmail.value = currentUser?.email || "";
+
+      show(createTicketOverlay);
+      createTicketOverlay.setAttribute("aria-hidden", "false");
+    }
+
+    function closeCreateTicketModal(){
+      hide(createTicketOverlay);
+      createTicketOverlay.setAttribute("aria-hidden", "true");
+      clearStatus(createTicketStatus);
+    }
+
+    createTicketBtn.addEventListener("click", openCreateTicketModal);
+    closeCreateTicketBtn.addEventListener("click", closeCreateTicketModal);
+    ctCancelBtn.addEventListener("click", closeCreateTicketModal);
+    createTicketOverlay.addEventListener("click", (e) => {
+      if (e.target === createTicketOverlay) closeCreateTicketModal();
+    });
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !createTicketOverlay.classList.contains("hide")) closeCreateTicketModal();
+    });
+
+    // Create ticket as admin:
+    // ✅ requester_email = selected user
+    // ✅ assigned_to_email = admin email
+    // ✅ org_id selected (or user profile org if you choose)
+    ctSubmitBtn.addEventListener("click", async () => {
+      clearStatus(createTicketStatus);
+
+      const requesterEmail = (ctRequesterEmail.value || "").trim();
+      const adminEmail = (currentUser?.email || "").trim();
+      const orgId = ctOrg.value || null;
+      const priority = ctPriority.value || "normal";
+      const subject = (ctSubject.value || "").trim();
+      const description = (ctDesc.value || "").trim();
+
+      if (!requesterEmail) return setStatus(createTicketStatus, "err", "❌ Select a requester email.");
+      if (!adminEmail) return setStatus(createTicketStatus, "err", "❌ Admin email not available. Re-login.");
+      if (!orgId) return setStatus(createTicketStatus, "err", "❌ Select an organization.");
+      if (!subject) return setStatus(createTicketStatus, "err", "❌ Subject is required.");
+      if (!description) return setStatus(createTicketStatus, "err", "❌ Description is required.");
+
+      try {
+        ctSubmitBtn.disabled = true;
+        setStatus(createTicketStatus, "ok", "Creating ticket…");
+
+        const payload = {
+          created_by: currentUser.id,          // admin created
+          requester_email: requesterEmail,     // ✅ user sees via My Tickets filter
+          requester_name: requesterEmail,
+          assigned_to_email: adminEmail,       // ✅ admin is assignee
+          priority,
+          subject,
+          description,
+          status: "open",
+          org_id: orgId
+        };
+
+        const { data, error } = await supabase
+          .from("tickets")
+          .insert(payload)
+          .select("id")
+          .single();
+
+        if (error) throw error;
+
+        setStatus(createTicketStatus, "ok", `✅ Ticket created! Ticket ID: ${data.id}`);
+
+        // refresh lists
+        await loadMyTickets();
+        await loadManageTickets();
+
+        // keep modal open briefly or close immediately:
+        // closeCreateTicketModal();
+
+      } catch (err) {
+        console.error("admin create ticket error:", err);
+        setStatus(createTicketStatus, "err", "❌ Create failed: " + (err?.message || "Check RLS."));
+      } finally {
+        ctSubmitBtn.disabled = false;
+      }
+    });
 
     // ===== UI State + Route Guard =====
     async function setUiForSession(session){
@@ -1169,6 +1374,9 @@
       currentUser = session.user;
       await loadProfile(session.user.id);
 
+      // load orgs for everyone so org names can render in tables
+      await loadOrganizations();
+
       if (currentRole === "admin") show(adminLink);
       else hide(adminLink);
 
@@ -1186,18 +1394,14 @@
 
       if (currentRole === "manager") {
         show(manageCard);
+        hide(createTicketBtn);
         manageTitle.textContent = "Team Tickets";
         manageDesc.textContent = "You can view and update tickets for your organization.";
-        hide(createTicketBtn);
       } else if (currentRole === "admin") {
         show(manageCard);
+        show(createTicketBtn); // ✅ admin can create tickets
         manageTitle.textContent = "All Tickets";
         manageDesc.textContent = "You can view and update all tickets.";
-        show(createTicketBtn);
-
-        // preload needed caches for modal
-        await loadOrganizations();
-        await loadUsers();
       } else {
         hide(manageCard);
         hide(createTicketBtn);
@@ -1207,10 +1411,16 @@
       if (currentRole === "admin" && wantsAdminView2) {
         show(adminMaintenance);
         activateAdminTab("orgs");
-        await loadOrganizations();
+        await loadOrganizationsForAdminPanel();
         await loadUsers();
+        // also load dropdown user list (same as users list)
+        await loadProfilesForDropdown();
       } else {
         hide(adminMaintenance);
+        if (currentRole === "admin") {
+          // still load dropdown users for create ticket modal
+          await loadProfilesForDropdown();
+        }
       }
 
       await loadMyTickets();
@@ -1238,10 +1448,14 @@
       const email = emailEl.value.trim();
       const password = passEl.value.trim();
 
-      if (!email || !password) return setStatus(authStatus, "err", "❌ Enter email + password.");
+      if (!email || !password) {
+        setStatus(authStatus, "err", "❌ Enter email + password.");
+        return;
+      }
 
       setStatus(authStatus, "ok", "Logging in…");
       const { error } = await supabase.auth.signInWithPassword({ email, password });
+
       if (error) setStatus(authStatus, "err", "❌ " + error.message);
       else setStatus(authStatus, "ok", "✅ Logged in.");
     }
@@ -1256,7 +1470,8 @@
       const password = passEl.value.trim();
 
       const { error } = await supabase.auth.signUp({
-        email, password,
+        email,
+        password,
         options: { emailRedirectTo: window.location.origin + "/support.html" }
       });
 
@@ -1267,11 +1482,18 @@
     // Forgot
     forgotBtn.addEventListener("click", async () => {
       clearStatus(authStatus);
+
       const email = emailEl.value.trim();
-      if (!email) return setStatus(authStatus, "err", "❌ Enter your email first, then click Forgot Password.");
+      if (!email) {
+        setStatus(authStatus, "err", "❌ Enter your email first, then click Forgot Password.");
+        return;
+      }
 
       setStatus(authStatus, "ok", "Sending reset email…");
-      const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + "/reset.html" });
+
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + "/reset.html"
+      });
 
       if (error) setStatus(authStatus, "err", "❌ " + error.message);
       else setStatus(authStatus, "ok", "✅ Reset email sent. Check your inbox (and spam).");
@@ -1301,7 +1523,7 @@
 
       const payload = {
         created_by: user.id,
-        requester_email: user.email,
+        requester_email: user.email,     // ✅ user sees tickets by requester_email
         requester_name: user.email,
         priority: document.getElementById("priority").value,
         subject: document.getElementById("subject").value.trim(),
@@ -1311,13 +1533,20 @@
       };
 
       try {
-        const { data, error } = await supabase.from("tickets").insert(payload).select("id").single();
+        const { data, error } = await supabase
+          .from("tickets")
+          .insert(payload)
+          .select("id")
+          .single();
+
         if (error) throw error;
 
         ticketForm.reset();
         setStatus(submitStatus, "ok", `✅ Ticket submitted! Ticket ID: ${data.id}`);
         await loadMyTickets();
-        if (currentRole === "manager" || currentRole === "admin") await loadManageTickets();
+        if (currentRole === "manager" || currentRole === "admin") {
+          await loadManageTickets();
+        }
       } catch (err) {
         console.error(err);
         setStatus(submitStatus, "err", "❌ Could not submit ticket: " + (err?.message || "Check RLS."));
@@ -1329,69 +1558,6 @@
     // Refresh buttons
     refreshMineBtn.addEventListener("click", loadMyTickets);
     refreshManageBtn.addEventListener("click", loadManageTickets);
-    refreshUsersBtn.addEventListener("click", loadUsers);
-
-    // ===== Admin Create Ticket wiring =====
-    createTicketBtn.addEventListener("click", () => {
-      if (currentRole !== "admin") return;
-      openCreateTicketModal();
-    });
-
-    closeCreateTicketBtn.addEventListener("click", closeCreateTicketModal);
-    ctCancelBtn.addEventListener("click", closeCreateTicketModal);
-    createTicketOverlay.addEventListener("click", (e) => { if (e.target === createTicketOverlay) closeCreateTicketModal(); });
-
-    // Create Ticket (Admin) submit
-    ctSubmitBtn.addEventListener("click", async () => {
-      clearStatus(createTicketStatus);
-
-      if (currentRole !== "admin") return setStatus(createTicketStatus, "err", "❌ Admin only.");
-
-      const requesterEmail = (ctRequesterEmail.value || "").trim().toLowerCase(); // selected user
-      const adminEmail = (currentUser?.email || "").trim().toLowerCase();        // logged in admin
-      const orgId = ctOrg.value || null;
-      const priority = ctPriority.value || "normal";
-      const subject = (ctSubject.value || "").trim();
-      const descriptionRaw = (ctDesc.value || "").trim();
-
-      if (!requesterEmail) return setStatus(createTicketStatus, "err", "❌ Select a requester email.");
-      if (!adminEmail) return setStatus(createTicketStatus, "err", "❌ Missing admin email (re-login).");
-      if (!orgId || !subject || !descriptionRaw) return setStatus(createTicketStatus, "err", "❌ Organization, subject, and description are required.");
-
-      const fullDesc = `Assigned To: ${adminEmail}\n\n${descriptionRaw}`;
-
-      try {
-        ctSubmitBtn.disabled = true;
-        setStatus(createTicketStatus, "ok", "Creating ticket…");
-
-        const payload = {
-          created_by: currentUser.id,            // admin user id (who created)
-          requester_email: requesterEmail,       // selected user email
-          requester_name: requesterEmail,
-          priority,
-          subject,
-          description: fullDesc,
-          status: "open",
-          org_id: orgId
-        };
-
-        const { data, error } = await supabase.from("tickets").insert(payload).select("id").single();
-        if (error) throw error;
-
-        setStatus(createTicketStatus, "ok", `✅ Ticket created! Ticket ID: ${data.id}`);
-
-        await loadManageTickets();
-        await loadMyTickets();
-
-        setTimeout(() => closeCreateTicketModal(), 600);
-
-      } catch (err) {
-        console.error("admin create ticket error:", err);
-        setStatus(createTicketStatus, "err", "❌ Could not create ticket: " + (err?.message || "Check RLS policies."));
-      } finally {
-        ctSubmitBtn.disabled = false;
-      }
-    });
   </script>
 </body>
 </html>
