@@ -38,9 +38,6 @@
     .btn.secondary{
       background:transparent;border:1px solid rgba(255,255,255,.16);color:var(--text);font-weight:650
     }
-    .btn.danger{
-      background:transparent;border:1px solid rgba(255,106,26,.35);color:var(--text);font-weight:700
-    }
     .btn.danger:hover{ background: rgba(255,106,26,.10); }
     .btn:disabled{opacity:.65;cursor:not-allowed}
     .actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
@@ -338,7 +335,7 @@
       <div class="modalHeader">
         <div>
           <h2 id="createTicketTitle" style="margin:0">Create Ticket (Admin)</h2>
-          <div class="muted">Create a ticket for any user and optionally assign it.</div>
+          <div class="muted">Create a ticket as the logged-in admin and optionally assign it.</div>
         </div>
         <button id="closeCreateTicketBtn" class="smallBtn" type="button">Close</button>
       </div>
@@ -347,12 +344,12 @@
 
       <div class="row">
         <div>
-          <label for="ctRequesterEmail">Requester Email</label>
-          <input id="ctRequesterEmail" type="email" placeholder="user@company.com" />
+          <label for="ctRequesterEmail">Requester Email (Admin)</label>
+          <input id="ctRequesterEmail" type="email" readonly />
         </div>
         <div>
           <label for="ctAssigneeEmail">Assign To (optional)</label>
-          <input id="ctAssigneeEmail" type="email" placeholder="tech@newage-tech.com" />
+          <select id="ctAssigneeEmail"></select>
         </div>
       </div>
 
@@ -480,12 +477,13 @@
     const refreshCommentsBtn = document.getElementById("refreshCommentsBtn");
     const commentFiles = document.getElementById("commentFiles");
 
-    // Create ticket modal elements
+    // Admin create ticket modal
     const createTicketBtn = document.getElementById("createTicketBtn");
     const createTicketOverlay = document.getElementById("createTicketOverlay");
     const closeCreateTicketBtn = document.getElementById("closeCreateTicketBtn");
     const ctCancelBtn = document.getElementById("ctCancelBtn");
     const createTicketStatus = document.getElementById("createTicketStatus");
+
     const ctRequesterEmail = document.getElementById("ctRequesterEmail");
     const ctAssigneeEmail = document.getElementById("ctAssigneeEmail");
     const ctOrg = document.getElementById("ctOrg");
@@ -522,6 +520,9 @@
     function goToHash(hash){
       if (window.location.hash !== hash) window.location.hash = hash;
     }
+    function isValidEmail(email){
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || "").trim());
+    }
 
     // State
     let currentUser = null;
@@ -538,6 +539,47 @@
 
     // Storage bucket name
     const ATTACH_BUCKET = "ticket-attachments";
+
+    function renderAssigneeDropdown(selectedEmail = ""){
+      const opts = [`<option value="">(unassigned)</option>`]
+        .concat(
+          (profilesCache || [])
+            .map(p => String(p.email || "").trim())
+            .filter(e => e && isValidEmail(e))
+            .sort((a,b) => a.localeCompare(b))
+            .map(email => `<option value="${escapeHtml(email)}" ${email===selectedEmail?"selected":""}>${escapeHtml(email)}</option>`)
+        );
+
+      ctAssigneeEmail.innerHTML = opts.join("");
+    }
+
+    function openCreateTicketModal(){
+      clearStatus(createTicketStatus);
+
+      // requester = logged-in admin
+      ctRequesterEmail.value = (currentUser?.email || "").trim();
+      ctRequesterEmail.readOnly = true;
+
+      // reset fields
+      ctSubject.value = "";
+      ctDesc.value = "";
+      ctPriority.value = "normal";
+
+      // populate org dropdown
+      ctOrg.innerHTML = `<option value="">(select org)</option>` +
+        (orgsCache || []).map(o => `<option value="${o.id}">${escapeHtml(o.name)}</option>`).join("");
+
+      // populate assignee dropdown from profiles
+      renderAssigneeDropdown("");
+
+      show(createTicketOverlay);
+      createTicketOverlay.setAttribute("aria-hidden", "false");
+    }
+    function closeCreateTicketModal(){
+      hide(createTicketOverlay);
+      createTicketOverlay.setAttribute("aria-hidden", "true");
+      clearStatus(createTicketStatus);
+    }
 
     // Tabs
     function activateAdminTab(which){
@@ -562,12 +604,14 @@
       currentRole = "user";
       currentOrgId = null;
 
+      // 1) Try with is_active
       let res = await supabase
         .from("profiles")
         .select("role, org_id, is_active")
         .eq("id", userId)
         .single();
 
+      // If schema doesn't have is_active yet, fallback
       if (res.error && String(res.error.message || "").toLowerCase().includes("is_active")) {
         res = await supabase
           .from("profiles")
@@ -583,6 +627,7 @@
         return;
       }
 
+      // Soft delete check only if column exists
       if (Object.prototype.hasOwnProperty.call(data, "is_active") && data.is_active === false) {
         alert("Your account has been deactivated. Please contact support.");
         await supabase.auth.signOut();
@@ -594,131 +639,6 @@
       currentRole = data?.role || "user";
       currentOrgId = data?.org_id || null;
     }
-
-    // ===== Create Ticket Modal (Admin) =====
-    function openCreateTicketModal(){
-      clearStatus(createTicketStatus);
-      ctRequesterEmail.value = "";
-      ctAssigneeEmail.value = "";
-      ctSubject.value = "";
-      ctDesc.value = "";
-      ctPriority.value = "normal";
-
-      ctOrg.innerHTML = `<option value="">(select org)</option>` +
-        (orgsCache || []).map(o => `<option value="${o.id}">${escapeHtml(o.name)}</option>`).join("");
-
-      show(createTicketOverlay);
-      createTicketOverlay.setAttribute("aria-hidden", "false");
-    }
-    function closeCreateTicketModal(){
-      hide(createTicketOverlay);
-      createTicketOverlay.setAttribute("aria-hidden", "true");
-      clearStatus(createTicketStatus);
-    }
-
-    closeCreateTicketBtn.addEventListener("click", closeCreateTicketModal);
-    ctCancelBtn.addEventListener("click", closeCreateTicketModal);
-    createTicketOverlay.addEventListener("click", (e) => {
-      if (e.target === createTicketOverlay) closeCreateTicketModal();
-    });
-
-    window.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") {
-        if (!commentsOverlay.classList.contains("hide")) closeCommentsModal();
-        if (!createTicketOverlay.classList.contains("hide")) closeCreateTicketModal();
-      }
-    });
-
-    createTicketBtn.addEventListener("click", async () => {
-      if (currentRole !== "admin") return;
-
-      // ensure orgs loaded even if admin hasn't opened #admin
-      if (!orgsCache || orgsCache.length === 0) {
-        await loadOrganizations(true);
-      }
-      openCreateTicketModal();
-    });
-
-    ctSubmitBtn.addEventListener("click", async () => {
-      clearStatus(createTicketStatus);
-
-      const requesterEmail = (ctRequesterEmail.value || "").trim().toLowerCase();
-      const assigneeEmail = (ctAssigneeEmail.value || "").trim().toLowerCase();
-      const orgId = ctOrg.value || null;
-      const priority = ctPriority.value || "normal";
-      const subject = (ctSubject.value || "").trim();
-      const descriptionRaw = (ctDesc.value || "").trim();
-
-      if (!requesterEmail || !orgId || !subject || !descriptionRaw) {
-        setStatus(createTicketStatus, "err", "❌ Requester email, org, subject, and description are required.");
-        return;
-      }
-
-      const { data: { session } } = await supabase.auth.getSession();
-      const adminUser = session?.user;
-      if (!adminUser) {
-        setStatus(createTicketStatus, "err", "❌ Please login first.");
-        return;
-      }
-      if (currentRole !== "admin") {
-        setStatus(createTicketStatus, "err", "❌ Admin access required.");
-        return;
-      }
-
-      const basePayload = {
-        created_by: adminUser.id,
-        requester_email: requesterEmail,
-        requester_name: requesterEmail,
-        priority,
-        subject,
-        description: descriptionRaw,
-        status: "open",
-        org_id: orgId
-      };
-
-      // Try to store assignment in a column if it exists; otherwise fallback into description.
-      const payloadWithAssigned = {
-        ...basePayload,
-        assigned_email: assigneeEmail || null
-      };
-
-      try {
-        ctSubmitBtn.disabled = true;
-        setStatus(createTicketStatus, "ok", "Creating ticket…");
-
-        // 1) Try insert with assigned_email (if column exists)
-        let ins = await supabase
-          .from("tickets")
-          .insert(payloadWithAssigned)
-          .select("id")
-          .single();
-
-        // 2) If column doesn't exist, fallback
-        if (ins.error && String(ins.error.message || "").toLowerCase().includes("assigned_email")) {
-          const desc2 = assigneeEmail
-            ? `Assigned To: ${assigneeEmail}\n\n${descriptionRaw}`
-            : descriptionRaw;
-
-          ins = await supabase
-            .from("tickets")
-            .insert({ ...basePayload, description: desc2 })
-            .select("id")
-            .single();
-        }
-
-        if (ins.error) throw ins.error;
-
-        setStatus(createTicketStatus, "ok", `✅ Ticket created: ${ins.data.id}`);
-        await loadManageTickets();
-        await loadMyTickets();
-        closeCreateTicketModal();
-      } catch (err) {
-        console.error("admin create ticket error:", err);
-        setStatus(createTicketStatus, "err", "❌ " + (err?.message || "Could not create ticket. Check RLS + schema."));
-      } finally {
-        ctSubmitBtn.disabled = false;
-      }
-    });
 
     // ===== COMMENTS (ticket_comments) =====
     function openCommentsModal(ticketId, subject){
@@ -748,6 +668,10 @@
     commentsOverlay.addEventListener("click", (e) => {
       if (e.target === commentsOverlay) closeCommentsModal();
     });
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !commentsOverlay.classList.contains("hide")) closeCommentsModal();
+      if (e.key === "Escape" && !createTicketOverlay.classList.contains("hide")) closeCreateTicketModal();
+    });
 
     function safeFileName(name){
       return String(name || "file")
@@ -771,6 +695,7 @@
 
       if (upErr) throw upErr;
 
+      // IMPORTANT: your table has uploader_id (NOT NULL) + uploader_email
       const row = {
         ticket_id: ticketId,
         comment_id: commentId,
@@ -831,7 +756,7 @@
       async function makeSignedUrl(path){
         const { data, error } = await supabase.storage
           .from(ATTACH_BUCKET)
-          .createSignedUrl(path, 60 * 60);
+          .createSignedUrl(path, 60 * 60); // 1 hour
         if (error) return null;
         return data?.signedUrl || null;
       }
@@ -878,6 +803,7 @@
       });
     }
 
+    // Add Comment (ONE handler only — not inside loadComments)
     addCommentBtn.addEventListener("click", async () => {
       clearStatus(commentsStatus);
 
@@ -1126,9 +1052,8 @@
     }
 
     // ===== ADMIN MAINTENANCE =====
-    async function loadOrganizations(silent=false){
-      if (!silent) clearStatus(orgStatus);
-
+    async function loadOrganizations(){
+      clearStatus(orgStatus);
       const { data, error } = await supabase
         .from("organizations")
         .select("id, name")
@@ -1136,7 +1061,7 @@
 
       if (error) {
         console.error(error);
-        if (!silent) setStatus(orgStatus, "err", "❌ Could not load organizations (check org RLS).");
+        setStatus(orgStatus, "err", "❌ Could not load organizations (check org RLS).");
         orgsCache = [];
         renderOrganizations();
         return;
@@ -1227,7 +1152,7 @@
       }
     });
 
-    refreshOrgsBtn.addEventListener("click", () => loadOrganizations(false));
+    refreshOrgsBtn.addEventListener("click", loadOrganizations);
 
     async function loadUsers(){
       clearStatus(usersStatus);
@@ -1359,11 +1284,9 @@
       currentUser = session.user;
       await loadProfile(session.user.id);
 
+      // Admin link visibility
       if (currentRole === "admin") show(adminLink);
       else hide(adminLink);
-
-      if (currentRole === "admin") show(createTicketBtn);
-      else hide(createTicketBtn);
 
       const wantsAdminView = window.location.hash === "#admin";
       if (wantsAdminView && currentRole !== "admin") {
@@ -1377,23 +1300,32 @@
       show(portal);
       show(logoutBtn);
 
+      // Manager/Admin ticket manage view
       if (currentRole === "manager") {
         show(manageCard);
         manageTitle.textContent = "Team Tickets";
         manageDesc.textContent = "You can view and update tickets for your organization.";
+        hide(createTicketBtn);
       } else if (currentRole === "admin") {
         show(manageCard);
         manageTitle.textContent = "All Tickets";
         manageDesc.textContent = "You can view and update all tickets.";
+        show(createTicketBtn);
+
+        // IMPORTANT: preload orgs + users so Create Ticket dropdowns work even if not on #admin
+        await loadOrganizations();
+        await loadUsers();
       } else {
         hide(manageCard);
+        hide(createTicketBtn);
       }
 
+      // Admin maintenance section (only on #admin)
       const wantsAdminView2 = window.location.hash === "#admin";
       if (currentRole === "admin" && wantsAdminView2) {
         show(adminMaintenance);
         activateAdminTab("orgs");
-        await loadOrganizations(false);
+        await loadOrganizations();
         await loadUsers();
       } else {
         hide(adminMaintenance);
@@ -1437,6 +1369,7 @@
     }
 
     loginBtn.addEventListener("click", doLogin);
+
     [emailEl, passEl].forEach(el => {
       el.addEventListener("keydown", (e) => {
         if (e.key === "Enter") doLogin();
@@ -1488,7 +1421,7 @@
       await supabase.auth.signOut();
     });
 
-    // Submit ticket
+    // Submit ticket (normal user)
     ticketForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       clearStatus(submitStatus);
@@ -1543,6 +1476,88 @@
     refreshMineBtn.addEventListener("click", loadMyTickets);
     refreshManageBtn.addEventListener("click", loadManageTickets);
     refreshUsersBtn.addEventListener("click", loadUsers);
+
+    // ===== Admin Create Ticket button + modal wiring =====
+    createTicketBtn.addEventListener("click", () => {
+      if (currentRole !== "admin") return;
+      openCreateTicketModal();
+    });
+
+    closeCreateTicketBtn.addEventListener("click", closeCreateTicketModal);
+    ctCancelBtn.addEventListener("click", closeCreateTicketModal);
+
+    createTicketOverlay.addEventListener("click", (e) => {
+      if (e.target === createTicketOverlay) closeCreateTicketModal();
+    });
+
+    // Create Ticket (Admin) submit
+    ctSubmitBtn.addEventListener("click", async () => {
+      clearStatus(createTicketStatus);
+
+      if (currentRole !== "admin") {
+        setStatus(createTicketStatus, "err", "❌ Admin only.");
+        return;
+      }
+
+      const requesterEmail = (currentUser?.email || "").trim().toLowerCase(); // logged-in admin
+      const assigneeEmail = (ctAssigneeEmail.value || "").trim().toLowerCase(); // dropdown
+      const orgId = ctOrg.value || null;
+      const priority = ctPriority.value || "normal";
+      const subject = (ctSubject.value || "").trim();
+      const descriptionRaw = (ctDesc.value || "").trim();
+
+      if (!requesterEmail) {
+        setStatus(createTicketStatus, "err", "❌ Missing admin email (re-login).");
+        return;
+      }
+      if (!orgId || !subject || !descriptionRaw) {
+        setStatus(createTicketStatus, "err", "❌ Organization, subject, and description are required.");
+        return;
+      }
+
+      const fullDesc = assigneeEmail
+        ? `Assigned To: ${assigneeEmail}\n\n${descriptionRaw}`
+        : descriptionRaw;
+
+      try {
+        ctSubmitBtn.disabled = true;
+        setStatus(createTicketStatus, "ok", "Creating ticket…");
+
+        const payload = {
+          created_by: currentUser.id,
+          requester_email: requesterEmail,
+          requester_name: requesterEmail,
+          priority,
+          subject,
+          description: fullDesc,
+          status: "open",
+          org_id: orgId
+        };
+
+        const { data, error } = await supabase
+          .from("tickets")
+          .insert(payload)
+          .select("id")
+          .single();
+
+        if (error) throw error;
+
+        setStatus(createTicketStatus, "ok", `✅ Ticket created! Ticket ID: ${data.id}`);
+
+        // refresh lists
+        await loadManageTickets();
+        await loadMyTickets();
+
+        // close after a short moment
+        setTimeout(() => closeCreateTicketModal(), 600);
+
+      } catch (err) {
+        console.error("admin create ticket error:", err);
+        setStatus(createTicketStatus, "err", "❌ Could not create ticket: " + (err?.message || "Check RLS policies."));
+      } finally {
+        ctSubmitBtn.disabled = false;
+      }
+    });
   </script>
 </body>
 </html>
