@@ -540,6 +540,12 @@
     import { supabase } from "./supabase.js";
 
     // Elements
+
+    const authStatus = document.getElementById("authStatus");
+    authStatus.className = "status ok";
+    authStatus.textContent = "✅ Script loaded";
+
+    
     const authCard = document.getElementById("authCard");
     const portal = document.getElementById("portal");
     const logoutBtn = document.getElementById("logoutBtn");
