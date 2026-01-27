@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="en">
 <head>
@@ -14,49 +15,22 @@
       --ok: rgba(46,230,166,.25);
       --info: rgba(76,141,255,.35);
       --warn: rgba(255,179,122,.35);
-      --shadow: 0 22px 60px rgba(0,0,0,.55);
     }
-
-    body{
-      margin:0;
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-      background:
-        radial-gradient(900px 600px at 15% 10%, rgba(255,106,26,.18) 0%, rgba(7,7,10,0) 60%),
-        radial-gradient(900px 600px at 85% 20%, rgba(255,179,122,.10) 0%, rgba(7,7,10,0) 55%),
-        linear-gradient(180deg, #07070A 0%, #0B0C12 100%);
-      color:var(--text);
-    }
-
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text)}
     a{color:var(--accent2);text-decoration:none}
     .wrap{max-width:1100px;margin:0 auto;padding:22px 16px}
     .top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
-    .card{
-      background:rgba(15,17,27,.78);
-      border:1px solid var(--border);
-      border-radius:16px;
-      padding:16px;
-      margin-top:12px;
-      box-shadow: var(--shadow);
-    }
+    .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;margin-top:12px}
     h1{margin:10px 0 0}
     h2{margin:0 0 8px}
     label{display:block;margin-top:12px;color:var(--muted);font-size:13px}
-
     input,select,textarea{
-      width:100%;
-      padding:12px;
-      border-radius:12px;
-      border:1px solid rgba(255,255,255,.14);
-      background:rgba(255,255,255,.03);
-      color:var(--text);
-      outline:none;
-      font-size:14px
+      width:100%;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.03);color:var(--text);outline:none;font-size:14px
     }
     textarea{min-height:120px;resize:vertical}
-
     .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
     @media(max-width:900px){.row{grid-template-columns:1fr}}
-
     .btn{
       padding:11px 14px;border-radius:12px;border:0;
       background:linear-gradient(135deg,var(--accent),var(--accent2));
@@ -66,51 +40,25 @@
       background:transparent;border:1px solid rgba(255,255,255,.16);color:var(--text);font-weight:650
     }
     .btn.danger{
-      background:transparent;border:1px solid rgba(255,106,26,.35);color:var(--text);font-weight:650
+      background:transparent;border:1px solid rgba(255,255,255,.16);color:rgba(243,246,255,.92);font-weight:650
     }
     .btn:disabled{opacity:.65;cursor:not-allowed}
-
     .actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-
-    .status{
-      margin-top:12px;
-      padding:10px 12px;
-      border-radius:12px;
-      border:1px solid rgba(255,255,255,.14);
-      background:rgba(255,255,255,.03);
-      display:none
-    }
+    .status{margin-top:12px;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.03);display:none}
     .status.ok{display:block;border-color:var(--ok);background:rgba(46,230,166,.06)}
     .status.err{display:block;border-color:rgba(255,106,26,.35);background:rgba(255,106,26,.06)}
-
     table{width:100%;border-collapse:collapse;margin-top:8px}
-    th,td{
-      padding:10px;
-      border-bottom:1px solid rgba(255,255,255,.08);
-      text-align:left;
-      font-size:14px;
-      vertical-align:top
-    }
+    th,td{padding:10px;border-bottom:1px solid rgba(255,255,255,.08);text-align:left;font-size:14px;vertical-align:top}
     th{color:rgba(243,246,255,.85);font-size:13px}
-
-    .pill{
-      display:inline-block;
-      padding:5px 9px;
-      border-radius:999px;
-      border:1px solid rgba(255,255,255,.14);
-      font-size:12px;
-      color:rgba(243,246,255,.90)
-    }
+    .pill{display:inline-block;padding:5px 9px;border-radius:999px;border:1px solid rgba(255,255,255,.14);font-size:12px;color:rgba(243,246,255,.90)}
     .pill.open{border-color:var(--warn)}
     .pill.working{border-color:var(--info)}
     .pill.complete{border-color:var(--ok)}
     .muted{color:var(--muted);font-size:13px;line-height:1.5}
     .hide{display:none !important}
     .mono{font-family:ui-monospace, SFMono-Regular, Menlo, monospace;font-size:12px}
-
     .split{display:grid;grid-template-columns:1fr 1fr;gap:12px}
     @media(max-width:980px){.split{grid-template-columns:1fr}}
-
     .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
     .tab{
       padding:8px 10px;border-radius:12px;border:1px solid rgba(255,255,255,.14);
@@ -120,7 +68,7 @@
     .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
     @media(max-width:980px){.grid2{grid-template-columns:1fr}}
 
-    /* ===== Modals ===== */
+    /* Modals */
     .modalOverlay{
       position:fixed; inset:0;
       background:rgba(0,0,0,.55);
@@ -156,11 +104,29 @@
     .commentItem:last-child{border-bottom:none}
     .commentMeta{color:rgba(243,246,255,.75); font-size:12px; margin-bottom:6px}
     .commentBody{white-space:pre-wrap}
-
     .smallBtn{
       padding:8px 10px;border-radius:12px;border:1px solid rgba(255,255,255,.14);
       background:rgba(255,255,255,.03);color:var(--text);cursor:pointer;font-weight:650
     }
+
+    /* Admin status sections (collapsible) */
+    .sectionHeader{
+      display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+      padding:10px 12px;border-radius:12px;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(255,255,255,.02);
+      margin-top:10px;
+    }
+    .sectionHeader .left{
+      display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+      font-weight:800;
+    }
+    .countBadge{
+      padding:5px 9px;border-radius:999px;border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.02);
+      font-size:12px;color:rgba(243,246,255,.88)
+    }
+    .sectionBody{margin-top:8px}
   </style>
 </head>
 
@@ -250,7 +216,7 @@
           <div class="actions" style="justify-content:space-between">
             <div>
               <h2 style="margin:0">My Tickets</h2>
-              <div class="muted">You only see tickets you created.</div>
+              <div class="muted">Tickets where you are the requester.</div>
             </div>
             <button id="refreshMineBtn" class="btn secondary" type="button">Refresh</button>
           </div>
@@ -264,6 +230,8 @@
                   <th>Subject</th>
                   <th>Priority</th>
                   <th>Status</th>
+                  <th>Hours</th>
+                  <th>Org</th>
                   <th>Ticket ID</th>
                   <th>Comments</th>
                 </tr>
@@ -290,89 +258,8 @@
 
         <div id="manageStatus" class="status" role="status" aria-live="polite"></div>
 
-        <!-- Collapsible status sections (Admin/Manager view) -->
-        <div id="manageSections" style="margin-top:10px; display:grid; gap:12px;">
-          <!-- OPEN -->
-          <div class="card" style="padding:12px; margin-top:0; box-shadow:none;">
-            <div class="actions" style="justify-content:space-between;align-items:center">
-              <div>
-                <b>Open</b> <span class="muted" id="countOpen"></span>
-              </div>
-              <button class="smallBtn" type="button" data-toggle-section="open">Minimize</button>
-            </div>
-            <div id="sectionOpen" style="overflow:auto; margin-top:8px;">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Created</th>
-                    <th>Org</th>
-                    <th>Requester</th>
-                    <th>Subject</th>
-                    <th>Priority</th>
-                    <th>Status / Hours</th>
-                    <th>Ticket ID</th>
-                    <th>Comments</th>
-                  </tr>
-                </thead>
-                <tbody id="manageBodyOpen"></tbody>
-              </table>
-            </div>
-          </div>
-
-          <!-- WORKING -->
-          <div class="card" style="padding:12px; margin-top:0; box-shadow:none;">
-            <div class="actions" style="justify-content:space-between;align-items:center">
-              <div>
-                <b>Working</b> <span class="muted" id="countWorking"></span>
-              </div>
-              <button class="smallBtn" type="button" data-toggle-section="working">Minimize</button>
-            </div>
-            <div id="sectionWorking" style="overflow:auto; margin-top:8px;">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Created</th>
-                    <th>Org</th>
-                    <th>Requester</th>
-                    <th>Subject</th>
-                    <th>Priority</th>
-                    <th>Status / Hours</th>
-                    <th>Ticket ID</th>
-                    <th>Comments</th>
-                  </tr>
-                </thead>
-                <tbody id="manageBodyWorking"></tbody>
-              </table>
-            </div>
-          </div>
-
-          <!-- COMPLETE -->
-          <div class="card" style="padding:12px; margin-top:0; box-shadow:none;">
-            <div class="actions" style="justify-content:space-between;align-items:center">
-              <div>
-                <b>Complete</b> <span class="muted" id="countComplete"></span>
-              </div>
-              <button class="smallBtn" type="button" data-toggle-section="complete">Minimize</button>
-            </div>
-            <div id="sectionComplete" style="overflow:auto; margin-top:8px;">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Created</th>
-                    <th>Org</th>
-                    <th>Requester</th>
-                    <th>Subject</th>
-                    <th>Priority</th>
-                    <th>Status / Hours</th>
-                    <th>Ticket ID</th>
-                    <th>Comments</th>
-                  </tr>
-                </thead>
-                <tbody id="manageBodyComplete"></tbody>
-              </table>
-            </div>
-          </div>
-        </div>
+        <!-- Collapsible sections rendered here -->
+        <div id="manageSections"></div>
       </div>
 
       <!-- ADMIN MAINTENANCE -->
@@ -490,7 +377,7 @@
       <div class="modalHeader">
         <div>
           <h2 id="createTicketTitle" style="margin:0">Create Ticket (Admin)</h2>
-          <div class="muted">Create a ticket for any user and optionally assign it.</div>
+          <div class="muted">Create a ticket for a user. “Assign To” will be your admin email.</div>
         </div>
         <button id="closeCreateTicketBtn" class="smallBtn" type="button">Close</button>
       </div>
@@ -499,12 +386,12 @@
 
       <div class="row">
         <div>
-          <label for="ctRequesterEmail">Requester Email</label>
-          <input id="ctRequesterEmail" type="email" placeholder="user@company.com" />
+          <label for="ctRequesterEmail">Requester (User Email)</label>
+          <select id="ctRequesterEmail"></select>
         </div>
         <div>
-          <label for="ctAssigneeEmail">Assign To (optional)</label>
-          <input id="ctAssigneeEmail" type="email" placeholder="tech@newage-tech.com" />
+          <label for="ctAssigneeEmail">Assign To (Admin Email)</label>
+          <input id="ctAssigneeEmail" type="email" readonly />
         </div>
       </div>
 
@@ -512,6 +399,7 @@
         <div>
           <label for="ctOrg">Organization</label>
           <select id="ctOrg"></select>
+          <div class="muted" style="margin-top:6px">Tip: defaults to the requester’s org when available.</div>
         </div>
         <div>
           <label for="ctPriority">Priority</label>
@@ -532,6 +420,7 @@
 
       <div class="actions" style="margin-top:10px">
         <button id="ctSubmitBtn" class="btn" type="button">Create Ticket</button>
+        <button id="ctCancelBtn" class="btn secondary" type="button">Cancel</button>
       </div>
     </div>
   </div>
@@ -564,28 +453,19 @@
 
     const manageCard = document.getElementById("manageCard");
     const refreshManageBtn = document.getElementById("refreshManageBtn");
+    const manageSections = document.getElementById("manageSections");
 
     const roleBadge = document.getElementById("roleBadge");
     const manageTitle = document.getElementById("manageTitle");
     const manageDesc = document.getElementById("manageDesc");
 
-    // Admin maintenance elements
+    // Admin maintenance elements (UI exists; admin maintenance actions can be added later)
     const adminMaintenance = document.getElementById("adminMaintenance");
     const adminLink = document.getElementById("adminLink");
     const tabOrgs = document.getElementById("tabOrgs");
     const tabUsers = document.getElementById("tabUsers");
     const panelOrgs = document.getElementById("panelOrgs");
     const panelUsers = document.getElementById("panelUsers");
-
-    const newOrgName = document.getElementById("newOrgName");
-    const createOrgBtn = document.getElementById("createOrgBtn");
-    const refreshOrgsBtn = document.getElementById("refreshOrgsBtn");
-    const orgsBody = document.getElementById("orgsBody");
-    const orgStatus = document.getElementById("orgStatus");
-
-    const refreshUsersBtn = document.getElementById("refreshUsersBtn");
-    const usersBody = document.getElementById("usersBody");
-    const usersStatus = document.getElementById("usersStatus");
 
     // Comments modal elements
     const commentsOverlay = document.getElementById("commentsOverlay");
@@ -598,12 +478,12 @@
     const refreshCommentsBtn = document.getElementById("refreshCommentsBtn");
     const commentFiles = document.getElementById("commentFiles");
 
-    // Create ticket modal elements
+    // Admin create ticket modal
     const createTicketBtn = document.getElementById("createTicketBtn");
     const createTicketOverlay = document.getElementById("createTicketOverlay");
     const closeCreateTicketBtn = document.getElementById("closeCreateTicketBtn");
+    const ctCancelBtn = document.getElementById("ctCancelBtn");
     const createTicketStatus = document.getElementById("createTicketStatus");
-
     const ctRequesterEmail = document.getElementById("ctRequesterEmail");
     const ctAssigneeEmail = document.getElementById("ctAssigneeEmail");
     const ctOrg = document.getElementById("ctOrg");
@@ -611,19 +491,6 @@
     const ctSubject = document.getElementById("ctSubject");
     const ctDesc = document.getElementById("ctDesc");
     const ctSubmitBtn = document.getElementById("ctSubmitBtn");
-
-    // Manage sections (grouped by status)
-    const manageBodyOpen = document.getElementById("manageBodyOpen");
-    const manageBodyWorking = document.getElementById("manageBodyWorking");
-    const manageBodyComplete = document.getElementById("manageBodyComplete");
-
-    const sectionOpen = document.getElementById("sectionOpen");
-    const sectionWorking = document.getElementById("sectionWorking");
-    const sectionComplete = document.getElementById("sectionComplete");
-
-    const countOpen = document.getElementById("countOpen");
-    const countWorking = document.getElementById("countWorking");
-    const countComplete = document.getElementById("countComplete");
 
     // Helpers
     function show(el){ el.classList.remove("hide"); }
@@ -637,7 +504,6 @@
       el.className = "status";
       el.textContent = "";
     }
-
     function escapeHtml(str){
       return String(str || "").replace(/[&<>"']/g, s => ({
         "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
@@ -649,30 +515,6 @@
     function pill(status){
       const s = status || "open";
       return `<span class="pill ${s}">${s.charAt(0).toUpperCase() + s.slice(1)}</span>`;
-    }
-    function goToHash(hash){
-      if (window.location.hash !== hash) window.location.hash = hash;
-    }
-
-    // Collapsible section toggles
-    function initSectionToggles(){
-      document.querySelectorAll('button[data-toggle-section]').forEach(btn => {
-        btn.addEventListener("click", () => {
-          const key = btn.getAttribute("data-toggle-section");
-          const map = { open: sectionOpen, working: sectionWorking, complete: sectionComplete };
-          const el = map[key];
-          if (!el) return;
-
-          const isHidden = el.classList.contains("hide");
-          if (isHidden){
-            el.classList.remove("hide");
-            btn.textContent = "Minimize";
-          } else {
-            el.classList.add("hide");
-            btn.textContent = "Maximize";
-          }
-        });
-      });
     }
 
     // State
@@ -686,42 +528,38 @@
 
     // Comments modal state
     let activeTicketId = null;
-    let activeTicketSubject = null;
 
     // Storage bucket name
     const ATTACH_BUCKET = "ticket-attachments";
 
-    // Tabs
-    function activateAdminTab(which){
-      tabOrgs.classList.remove("active");
-      tabUsers.classList.remove("active");
-      hide(panelOrgs);
-      hide(panelUsers);
-
-      if (which === "orgs"){
-        tabOrgs.classList.add("active");
-        show(panelOrgs);
-      } else {
-        tabUsers.classList.add("active");
-        show(panelUsers);
-      }
+    // Map org id -> name (for display)
+    function orgNameById(id){
+      const hit = orgsCache.find(o => o.id === id);
+      return hit ? hit.name : (id ? String(id).slice(0,8) + "…" : "");
     }
-    tabOrgs.addEventListener("click", () => activateAdminTab("orgs"));
-    tabUsers.addEventListener("click", () => activateAdminTab("users"));
 
-    // Robust profile loader
+    // ===== Admin collapse state =====
+    const sectionCollapsed = { open:false, working:false, complete:false };
+    function toggleSection(key){
+      sectionCollapsed[key] = !sectionCollapsed[key];
+      const body = document.getElementById(`secBody_${key}`);
+      const btn = document.getElementById(`secBtn_${key}`);
+      if (!body || !btn) return;
+      if (sectionCollapsed[key]) { body.classList.add("hide"); btn.textContent = "Expand"; }
+      else { body.classList.remove("hide"); btn.textContent = "Collapse"; }
+    }
+
+    // ===== Profile loader =====
     async function loadProfile(userId){
       currentRole = "user";
       currentOrgId = null;
 
-      // 1) Try with is_active
       let res = await supabase
         .from("profiles")
         .select("role, org_id, is_active")
         .eq("id", userId)
         .single();
 
-      // If schema doesn't have is_active yet, fallback
       if (res.error && String(res.error.message || "").toLowerCase().includes("is_active")) {
         res = await supabase
           .from("profiles")
@@ -731,10 +569,7 @@
       }
 
       const { data, error } = res;
-      if (error) {
-        console.error("loadProfile error:", error);
-        return;
-      }
+      if (error) { console.error("loadProfile error:", error); return; }
 
       if (Object.prototype.hasOwnProperty.call(data, "is_active") && data.is_active === false) {
         alert("Your account has been deactivated. Please contact support.");
@@ -748,31 +583,9 @@
       currentOrgId = data?.org_id || null;
     }
 
-    // Org helpers (for showing org name in Manage view)
-    async function ensureOrgCache(){
-      if (orgsCache && orgsCache.length) return;
-      const { data, error } = await supabase
-        .from("organizations")
-        .select("id, name")
-        .order("name", { ascending: true });
-
-      if (error) {
-        console.warn("ensureOrgCache org fetch error:", error);
-        orgsCache = [];
-        return;
-      }
-      orgsCache = data || [];
-    }
-    function orgNameFor(id){
-      if (!id) return "";
-      const o = (orgsCache || []).find(x => x.id === id);
-      return o ? o.name : "";
-    }
-
-    // ===== COMMENTS (ticket_comments) =====
+    // ===== COMMENTS =====
     function openCommentsModal(ticketId, subject){
       activeTicketId = ticketId;
-      activeTicketSubject = subject || "";
       commentsTicketLine.textContent = `Ticket: ${ticketId}${subject ? " • " + subject : ""}`;
       newCommentText.value = "";
       if (commentFiles) commentFiles.value = "";
@@ -786,7 +599,6 @@
       hide(commentsOverlay);
       commentsOverlay.setAttribute("aria-hidden", "true");
       activeTicketId = null;
-      activeTicketSubject = null;
       commentsList.innerHTML = `<div class="muted">—</div>`;
       clearStatus(commentsStatus);
       newCommentText.value = "";
@@ -797,8 +609,10 @@
     commentsOverlay.addEventListener("click", (e) => {
       if (e.target === commentsOverlay) closeCommentsModal();
     });
+
     window.addEventListener("keydown", (e) => {
       if (e.key === "Escape" && !commentsOverlay.classList.contains("hide")) closeCommentsModal();
+      if (e.key === "Escape" && !createTicketOverlay.classList.contains("hide")) closeCreateTicketModal();
     });
 
     function safeFileName(name){
@@ -840,7 +654,6 @@
         .insert(row);
 
       if (insErr) throw insErr;
-
       return row;
     }
 
@@ -866,8 +679,6 @@
         .select("id, ticket_id, comment_id, file_name, mime_type, file_size, storage_path, created_at")
         .eq("ticket_id", ticketId)
         .order("created_at", { ascending: true });
-
-      if (aErr) console.error("loadAttachments error:", aErr);
 
       const byComment = new Map();
       (atts || []).forEach(a => {
@@ -920,10 +731,7 @@
           const path = a.getAttribute("data-att");
           setStatus(commentsStatus, "ok", "Preparing download…");
           const url = await makeSignedUrl(path);
-          if (!url) {
-            setStatus(commentsStatus, "err", "❌ Could not create download link.");
-            return;
-          }
+          if (!url) return setStatus(commentsStatus, "err", "❌ Could not create download link.");
           clearStatus(commentsStatus);
           window.open(url, "_blank", "noopener,noreferrer");
         });
@@ -944,14 +752,7 @@
       const user = session?.user;
       if (!user) return setStatus(commentsStatus, "err", "❌ Please login first.");
 
-      const MAX_FILES = 5;
-      const MAX_MB_EACH = 10;
-      if (files.length > MAX_FILES) return setStatus(commentsStatus, "err", `❌ Max ${MAX_FILES} files per comment.`);
-      for (const f of files){
-        if (f.size > MAX_MB_EACH * 1024 * 1024) return setStatus(commentsStatus, "err", `❌ "${f.name}" is too large (max ${MAX_MB_EACH}MB).`);
-      }
-
-      try{
+      try {
         addCommentBtn.disabled = true;
         setStatus(commentsStatus, "ok", "Saving comment…");
 
@@ -969,11 +770,9 @@
         if (cErr) throw cErr;
         const commentId = cRow.id;
 
-        if (files.length > 0){
+        if (files.length > 0) {
           setStatus(commentsStatus, "ok", `Uploading ${files.length} file(s)…`);
-          for (const file of files){
-            await uploadOneAttachment({ ticketId, commentId, file, user });
-          }
+          for (const file of files) await uploadOneAttachment({ ticketId, commentId, file, user });
         }
 
         newCommentText.value = "";
@@ -981,7 +780,7 @@
         setStatus(commentsStatus, "ok", "✅ Comment added.");
         await loadComments(ticketId);
 
-      } catch (err){
+      } catch (err) {
         console.error("addComment error:", err);
         setStatus(commentsStatus, "err", "❌ Could not add comment: " + (err?.message || "Check RLS/Storage policies."));
       } finally {
@@ -993,23 +792,158 @@
       if (activeTicketId) loadComments(activeTicketId);
     });
 
-    // ===== Tickets =====
+    // ===== ADMIN CREATE TICKET MODAL =====
+    function openCreateTicketModal(){
+      clearStatus(createTicketStatus);
+      ctSubject.value = "";
+      ctDesc.value = "";
+      ctPriority.value = "normal";
+      ctAssigneeEmail.value = currentUser?.email || "";
+
+      const options = [`<option value="">(select user)</option>`]
+        .concat(
+          (profilesCache || [])
+            .filter(p => !!p.email && p.is_active !== false)
+            .sort((a,b) => String(a.email).localeCompare(String(b.email)))
+            .map(p => `<option value="${escapeHtml(p.email)}" data-org="${escapeHtml(p.org_id || "")}">${escapeHtml(p.email)}</option>`)
+        );
+      ctRequesterEmail.innerHTML = options.join("");
+
+      ctOrg.innerHTML =
+        `<option value="">(select org)</option>` +
+        (orgsCache || []).map(o => `<option value="${o.id}">${escapeHtml(o.name)}</option>`).join("");
+
+      ctRequesterEmail.onchange = () => {
+        const sel = ctRequesterEmail.selectedOptions?.[0];
+        const orgId = sel?.getAttribute("data-org") || "";
+        if (orgId) ctOrg.value = orgId;
+      };
+
+      show(createTicketOverlay);
+      createTicketOverlay.setAttribute("aria-hidden", "false");
+    }
+
+    function closeCreateTicketModal(){
+      hide(createTicketOverlay);
+      createTicketOverlay.setAttribute("aria-hidden", "true");
+      clearStatus(createTicketStatus);
+    }
+
+    closeCreateTicketBtn.addEventListener("click", closeCreateTicketModal);
+    ctCancelBtn.addEventListener("click", closeCreateTicketModal);
+    createTicketOverlay.addEventListener("click", (e) => {
+      if (e.target === createTicketOverlay) closeCreateTicketModal();
+    });
+
+    createTicketBtn.addEventListener("click", () => {
+      if (currentRole !== "admin") return;
+      openCreateTicketModal();
+    });
+
+    ctSubmitBtn.addEventListener("click", async () => {
+      clearStatus(createTicketStatus);
+
+      if (currentRole !== "admin") {
+        return setStatus(createTicketStatus, "err", "❌ Admin only.");
+      }
+
+      const requesterEmail = (ctRequesterEmail.value || "").trim();
+      const assigneeEmail = (ctAssigneeEmail.value || "").trim(); // admin email
+      const orgId = ctOrg.value || null;
+      const priority = ctPriority.value || "normal";
+      const subject = (ctSubject.value || "").trim();
+      const description = (ctDesc.value || "").trim();
+
+      if (!requesterEmail) return setStatus(createTicketStatus, "err", "❌ Select a requester.");
+      if (!subject) return setStatus(createTicketStatus, "err", "❌ Enter a subject.");
+      if (!description) return setStatus(createTicketStatus, "err", "❌ Enter a description.");
+      if (!orgId) return setStatus(createTicketStatus, "err", "❌ Select an organization.");
+
+      try {
+        ctSubmitBtn.disabled = true;
+        setStatus(createTicketStatus, "ok", "Creating ticket…");
+
+        const payload = {
+          created_by: currentUser.id,
+          requester_email: requesterEmail,
+          requester_name: requesterEmail,
+          assigned_to_email: assigneeEmail || null,
+          priority,
+          subject,
+          description,
+          status: "open",
+          org_id: orgId,
+          hours_worked: 0,
+          is_deleted: false
+        };
+
+        const { data, error } = await supabase
+          .from("tickets")
+          .insert(payload)
+          .select("id")
+          .single();
+
+        if (error) throw error;
+
+        setStatus(createTicketStatus, "ok", `✅ Ticket created: ${data.id}`);
+        await loadMyTickets();
+        await loadManageTickets();
+        setTimeout(() => closeCreateTicketModal(), 650);
+
+      } catch (err) {
+        console.error(err);
+        setStatus(createTicketStatus, "err", "❌ Create failed: " + (err?.message || "Check RLS."));
+      } finally {
+        ctSubmitBtn.disabled = false;
+      }
+    });
+
+    // ===== Data loaders =====
+    async function loadOrganizationsBestEffort(){
+      const { data, error } = await supabase
+        .from("organizations")
+        .select("id, name")
+        .order("name", { ascending: true });
+
+      if (!error) orgsCache = data || [];
+      else orgsCache = [];
+    }
+
+    async function loadUsersBestEffort(){
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, email, role, org_id, is_active, created_at")
+        .order("created_at", { ascending: false });
+
+      if (!error) profilesCache = data || [];
+      else profilesCache = [];
+    }
+
+    // ===== Tickets (My Tickets) =====
     async function loadMyTickets(){
       clearStatus(mineStatus);
       mineBody.innerHTML = "";
 
+      if (!currentUser?.email) {
+        mineBody.innerHTML = `<tr><td colspan="8" class="muted">No session.</td></tr>`;
+        return;
+      }
+
       const { data, error } = await supabase
         .from("tickets")
-        .select("id, created_at, subject, priority, status")
+        .select("id, created_at, subject, priority, status, org_id, hours_worked")
+        .eq("is_deleted", false)
+        .eq("requester_email", currentUser.email)
         .order("created_at", { ascending: false });
 
       if (error) {
         console.error(error);
-        return setStatus(mineStatus, "err", "❌ Could not load your tickets.");
+        setStatus(mineStatus, "err", "❌ Could not load your tickets.");
+        return;
       }
 
       if (!data || data.length === 0) {
-        mineBody.innerHTML = `<tr><td colspan="6" class="muted">No tickets yet.</td></tr>`;
+        mineBody.innerHTML = `<tr><td colspan="8" class="muted">No tickets yet.</td></tr>`;
         return;
       }
 
@@ -1019,6 +953,8 @@
           <td>${escapeHtml(t.subject)}</td>
           <td>${escapeHtml(t.priority)}</td>
           <td>${pill(t.status)}</td>
+          <td>${escapeHtml((t.hours_worked ?? 0).toString())}</td>
+          <td>${escapeHtml(orgNameById(t.org_id) || t.org_id || "")}</td>
           <td class="mono">${t.id}</td>
           <td>
             <button class="smallBtn" type="button" data-comments="${t.id}" data-subject="${escapeHtml(t.subject)}">Comments</button>
@@ -1028,131 +964,164 @@
 
       mineBody.querySelectorAll("button[data-comments]").forEach(btn => {
         btn.addEventListener("click", () => {
-          openCommentsModal(btn.getAttribute("data-comments"), btn.getAttribute("data-subject") || "");
+          const id = btn.getAttribute("data-comments");
+          const subj = btn.getAttribute("data-subject") || "";
+          openCommentsModal(id, subj);
         });
       });
     }
 
-    // GROUPED admin/manager view
-    async function loadManageTickets(){
-      clearStatus(manageStatus);
+    // ===== Tickets (Manage) =====
+    function renderManageSections(rows){
+      const openRows = rows.filter(r => (r.status || "open") === "open");
+      const workingRows = rows.filter(r => r.status === "working");
+      const completeRows = rows.filter(r => r.status === "complete");
 
-      manageBodyOpen.innerHTML = "";
-      manageBodyWorking.innerHTML = "";
-      manageBodyComplete.innerHTML = "";
-
-      await ensureOrgCache();
-
-      const { data, error } = await supabase
-        .from("tickets")
-        .select("id, created_at, requester_email, subject, priority, status, hours_worked, org_id")
-        .order("created_at", { ascending: false });
-
-      if (error) {
-        console.error(error);
-        setStatus(manageStatus, "err", "❌ Could not load manage tickets (check RLS role/org).");
-        return;
-      }
-
-      const rows = data || [];
-      const open = rows.filter(t => (t.status || "open") === "open");
-      const working = rows.filter(t => t.status === "working");
-      const complete = rows.filter(t => t.status === "complete");
-
-      countOpen.textContent = `(${open.length})`;
-      countWorking.textContent = `(${working.length})`;
-      countComplete.textContent = `(${complete.length})`;
-
-      function rowHtml(t){
-        const showHours = (currentRole === "admin");
-        const hoursVal = (t.hours_worked ?? 0);
-
+      function section(key, title, badge, bodyHtml){
         return `
-          <tr>
-            <td>${fmtDate(t.created_at)}</td>
-            <td>${escapeHtml(orgNameFor(t.org_id) || t.org_id || "")}</td>
-            <td>${escapeHtml(t.requester_email || "")}</td>
-            <td>${escapeHtml(t.subject)}</td>
-            <td>${escapeHtml(t.priority)}</td>
-
-            <td>
-              <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-                <select data-id="${t.id}" data-field="status">
-                  <option value="open" ${t.status==="open"?"selected":""}>open</option>
-                  <option value="working" ${t.status==="working"?"selected":""}>working</option>
-                  <option value="complete" ${t.status==="complete"?"selected":""}>complete</option>
-                </select>
-
-                ${showHours ? `
-                  <input
-                    data-id="${t.id}"
-                    data-field="hours"
-                    type="number"
-                    min="0"
-                    step="0.25"
-                    style="max-width:120px"
-                    value="${hoursVal}"
-                    title="Hours worked"
-                  />
-                  <button class="smallBtn" type="button" data-save="${t.id}">Save</button>
-                ` : ``}
-              </div>
-            </td>
-
-            <td class="mono">${t.id}</td>
-
-            <td>
-              <button class="smallBtn" type="button" data-comments="${t.id}" data-subject="${escapeHtml(t.subject)}">Comments</button>
-            </td>
-          </tr>
+          <div class="sectionHeader">
+            <div class="left">
+              <span>${title}</span>
+              <span class="countBadge">${badge}</span>
+            </div>
+            <div class="actions">
+              <button class="smallBtn" type="button" id="secBtn_${key}">${sectionCollapsed[key] ? "Expand" : "Collapse"}</button>
+            </div>
+          </div>
+          <div class="sectionBody ${sectionCollapsed[key] ? "hide" : ""}" id="secBody_${key}">
+            ${bodyHtml}
+          </div>
         `;
       }
 
-      function renderInto(tbody, list){
-        if (!list.length){
-          tbody.innerHTML = `<tr><td colspan="8" class="muted">No tickets.</td></tr>`;
-          return;
-        }
-        tbody.innerHTML = list.map(rowHtml).join("");
+      function tableFor(list){
+        if (!list.length) return `<div class="muted" style="padding:10px 2px">No tickets.</div>`;
+
+        const showHoursEdit = (currentRole === "admin");
+        const showDelete = (currentRole === "admin");
+
+        return `
+          <div style="overflow:auto">
+            <table>
+              <thead>
+                <tr>
+                  <th>Created</th>
+                  <th>Requester</th>
+                  <th>Subject</th>
+                  <th>Priority</th>
+                  <th>Org</th>
+                  <th>Status</th>
+                  ${showHoursEdit ? `<th>Hours</th><th>Save</th>` : `<th>Hours</th>`}
+                  <th>Ticket ID</th>
+                  <th>Comments</th>
+                  ${showDelete ? `<th>Delete</th>` : ``}
+                </tr>
+              </thead>
+              <tbody>
+                ${list.map(t => {
+                  const hoursVal = (t.hours_worked ?? 0);
+                  return `
+                    <tr>
+                      <td>${fmtDate(t.created_at)}</td>
+                      <td>${escapeHtml(t.requester_email || "")}</td>
+                      <td>${escapeHtml(t.subject)}</td>
+                      <td>${escapeHtml(t.priority)}</td>
+                      <td>${escapeHtml(orgNameById(t.org_id) || t.org_id || "")}</td>
+
+                      <td>
+                        <select data-id="${t.id}" data-field="status">
+                          <option value="open" ${t.status==="open"?"selected":""}>open</option>
+                          <option value="working" ${t.status==="working"?"selected":""}>working</option>
+                          <option value="complete" ${t.status==="complete"?"selected":""}>complete</option>
+                        </select>
+                      </td>
+
+                      ${showHoursEdit ? `
+                        <td>
+                          <input
+                            data-id="${t.id}"
+                            data-field="hours"
+                            type="number"
+                            min="0"
+                            step="0.25"
+                            style="max-width:120px"
+                            value="${hoursVal}"
+                            title="Hours worked"
+                          />
+                        </td>
+                        <td>
+                          <button class="smallBtn" type="button" data-save="${t.id}">Save</button>
+                        </td>
+                      ` : `
+                        <td>${escapeHtml(String(hoursVal))}</td>
+                      `}
+
+                      <td class="mono">${t.id}</td>
+
+                      <td>
+                        <button class="smallBtn" type="button" data-comments="${t.id}" data-subject="${escapeHtml(t.subject)}">Comments</button>
+                      </td>
+
+                      ${showDelete ? `
+                        <td>
+                          <button class="smallBtn" type="button" data-delete="${t.id}">Delete</button>
+                        </td>
+                      ` : ``}
+                    </tr>
+                  `;
+                }).join("")}
+              </tbody>
+            </table>
+          </div>
+        `;
       }
 
-      renderInto(manageBodyOpen, open);
-      renderInto(manageBodyWorking, working);
-      renderInto(manageBodyComplete, complete);
+      manageSections.innerHTML =
+        section("open", "Open Tickets", openRows.length, tableFor(openRows)) +
+        section("working", "Working Tickets", workingRows.length, tableFor(workingRows)) +
+        section("complete", "Complete Tickets", completeRows.length, tableFor(completeRows));
 
-      // Comments
-      document.querySelectorAll('button[data-comments]').forEach(btn => {
+      ["open","working","complete"].forEach(k => {
+        document.getElementById(`secBtn_${k}`)?.addEventListener("click", () => toggleSection(k));
+      });
+
+      // Comments buttons
+      manageSections.querySelectorAll("button[data-comments]").forEach(btn => {
         btn.addEventListener("click", () => {
-          openCommentsModal(btn.getAttribute("data-comments"), btn.getAttribute("data-subject") || "");
+          const id = btn.getAttribute("data-comments");
+          const subj = btn.getAttribute("data-subject") || "";
+          openCommentsModal(id, subj);
         });
       });
 
-      // Status change (re-groups after change)
-      document.querySelectorAll('select[data-field="status"][data-id]').forEach(sel => {
+      // Status change (immediate)
+      manageSections.querySelectorAll('select[data-field="status"][data-id]').forEach(sel => {
         sel.addEventListener("change", async () => {
           const id = sel.getAttribute("data-id");
           const status = sel.value;
 
           setStatus(manageStatus, "ok", "Updating status…");
-          const { error } = await supabase.from("tickets").update({ status }).eq("id", id);
+          const { error } = await supabase
+            .from("tickets")
+            .update({ status })
+            .eq("id", id);
 
           if (error) {
             console.error(error);
             setStatus(manageStatus, "err", "❌ Status update failed: " + error.message);
           } else {
             setStatus(manageStatus, "ok", "✅ Status updated.");
-            await loadManageTickets();
           }
         });
       });
 
-      // Admin save hours
+      // Save hours + status (admin)
       if (currentRole === "admin") {
-        document.querySelectorAll('button[data-save]').forEach(btn => {
+        manageSections.querySelectorAll('button[data-save]').forEach(btn => {
           btn.addEventListener("click", async () => {
             const id = btn.getAttribute("data-save");
-            const statusSel = document.querySelector(`select[data-field="status"][data-id="${id}"]`);
-            const hoursInput = document.querySelector(`input[data-field="hours"][data-id="${id}"]`);
+            const statusSel = manageSections.querySelector(`select[data-field="status"][data-id="${id}"]`);
+            const hoursInput = manageSections.querySelector(`input[data-field="hours"][data-id="${id}"]`);
 
             const status = statusSel?.value || "open";
             const hours = Number(hoursInput?.value ?? 0);
@@ -1174,331 +1143,77 @@
             } else {
               setStatus(manageStatus, "ok", "✅ Saved.");
               await loadManageTickets();
+              await loadMyTickets(); // so requester sees updated hours quickly
+            }
+          });
+        });
+
+        // Soft delete
+        manageSections.querySelectorAll('button[data-delete]').forEach(btn => {
+          btn.addEventListener("click", async () => {
+            const id = btn.getAttribute("data-delete");
+            if (!confirm("Soft delete this ticket? (It will no longer show in the portal)")) return;
+
+            setStatus(manageStatus, "ok", "Deleting…");
+            const { error } = await supabase
+              .from("tickets")
+              .update({ is_deleted: true })
+              .eq("id", id);
+
+            if (error) {
+              console.error(error);
+              setStatus(manageStatus, "err", "❌ Delete failed: " + error.message);
+            } else {
+              setStatus(manageStatus, "ok", "✅ Ticket deleted.");
+              await loadManageTickets();
+              await loadMyTickets();
             }
           });
         });
       }
     }
 
-    // ===== ADMIN MAINTENANCE =====
-    async function loadOrganizations(){
-      clearStatus(orgStatus);
-      const { data, error } = await supabase
-        .from("organizations")
-        .select("id, name")
-        .order("name", { ascending: true });
+    async function loadManageTickets(){
+      clearStatus(manageStatus);
+      manageSections.innerHTML = "";
 
-      if (error) {
-        console.error(error);
-        setStatus(orgStatus, "err", "❌ Could not load organizations (check org RLS).");
-        orgsCache = [];
-        renderOrganizations();
-        return;
-      }
+      if (!(currentRole === "manager" || currentRole === "admin")) return;
 
-      orgsCache = data || [];
-      renderOrganizations();
-    }
-
-    function renderOrganizations(){
-      orgsBody.innerHTML = (orgsCache.length ? orgsCache : []).map(o => `
-        <tr>
-          <td>${escapeHtml(o.name)}</td>
-          <td class="mono">${o.id}</td>
-          <td class="actions">
-            <button class="btn secondary" data-rename="${o.id}" type="button">Rename</button>
-            <button class="btn danger" data-delete="${o.id}" type="button">Delete</button>
-          </td>
-        </tr>
-      `).join("") || `<tr><td colspan="3" class="muted">No organizations yet.</td></tr>`;
-
-      orgsBody.querySelectorAll("button[data-rename]").forEach(btn => {
-        btn.addEventListener("click", async () => {
-          const id = btn.getAttribute("data-rename");
-          const cur = orgsCache.find(x => x.id === id);
-          const newName = prompt("Rename organization:", cur?.name || "");
-          if (!newName) return;
-
-          setStatus(orgStatus, "ok", "Updating…");
-          const { error } = await supabase
-            .from("organizations")
-            .update({ name: newName.trim() })
-            .eq("id", id);
-
-          if (error) {
-            console.error(error);
-            setStatus(orgStatus, "err", "❌ Rename failed: " + error.message);
-          } else {
-            setStatus(orgStatus, "ok", "✅ Organization renamed.");
-            await loadOrganizations();
-            await loadUsers();
-          }
-        });
-      });
-
-      orgsBody.querySelectorAll("button[data-delete]").forEach(btn => {
-        btn.addEventListener("click", async () => {
-          const id = btn.getAttribute("data-delete");
-          const cur = orgsCache.find(x => x.id === id);
-          if (!confirm(`Delete organization "${cur?.name}"?`)) return;
-
-          setStatus(orgStatus, "ok", "Deleting…");
-          const { error } = await supabase
-            .from("organizations")
-            .delete()
-            .eq("id", id);
-
-          if (error) {
-            console.error(error);
-            setStatus(orgStatus, "err", "❌ Delete failed. Unlink users/tickets from this org first.");
-          } else {
-            setStatus(orgStatus, "ok", "✅ Organization deleted.");
-            await loadOrganizations();
-            await loadUsers();
-          }
-        });
-      });
-    }
-
-    createOrgBtn.addEventListener("click", async () => {
-      const name = newOrgName.value.trim();
-      if (!name) return;
-
-      clearStatus(orgStatus);
-      setStatus(orgStatus, "ok", "Creating…");
-
-      const { error } = await supabase
-        .from("organizations")
-        .insert({ name });
-
-      if (error) {
-        console.error(error);
-        setStatus(orgStatus, "err", "❌ Create failed: " + error.message);
-      } else {
-        newOrgName.value = "";
-        setStatus(orgStatus, "ok", "✅ Organization created.");
-        await loadOrganizations();
-      }
-    });
-
-    refreshOrgsBtn.addEventListener("click", loadOrganizations);
-
-    async function loadUsers(){
-      clearStatus(usersStatus);
-      usersBody.innerHTML = "";
-
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id, email, role, org_id, is_active, created_at")
+      // Manager: org tickets, Admin: all tickets
+      let q = supabase
+        .from("tickets")
+        .select("id, created_at, requester_email, subject, priority, status, org_id, hours_worked, is_deleted")
+        .eq("is_deleted", false)
         .order("created_at", { ascending: false });
 
+      if (currentRole === "manager") {
+        q = q.eq("org_id", currentOrgId);
+      }
+
+      const { data, error } = await q;
+
       if (error) {
         console.error(error);
-        setStatus(usersStatus, "err", "❌ Could not load users: " + error.message);
-        profilesCache = [];
-        renderUsers();
+        setStatus(manageStatus, "err", "❌ Could not load tickets (check RLS/role).");
         return;
       }
 
-      profilesCache = data || [];
-      renderUsers();
+      renderManageSections(data || []);
     }
 
-    function orgOptions(selectedId){
-      const opts = [`<option value="">(none)</option>`]
-        .concat(orgsCache.map(o => `<option value="${o.id}" ${o.id===selectedId?"selected":""}>${escapeHtml(o.name)}</option>`));
-      return opts.join("");
-    }
-
-    function renderUsers(){
-      usersBody.innerHTML = (profilesCache.length ? profilesCache : []).map(p => `
-        <tr>
-          <td class="mono">${p.id}</td>
-          <td>${escapeHtml(p.email || "(no email)")}</td>
-          <td>
-            <select data-role="${p.id}">
-              <option value="user" ${p.role==="user"?"selected":""}>user</option>
-              <option value="manager" ${p.role==="manager"?"selected":""}>manager</option>
-              <option value="admin" ${p.role==="admin"?"selected":""}>admin</option>
-            </select>
-          </td>
-          <td>
-            <select data-org="${p.id}">
-              ${orgOptions(p.org_id)}
-            </select>
-          </td>
-          <td class="actions">
-            <button class="btn secondary" data-save="${p.id}" type="button">Save</button>
-            <button class="btn danger" data-toggle="${p.id}" type="button">
-              ${p.is_active ? "Deactivate" : "Reactivate"}
-            </button>
-          </td>
-        </tr>
-      `).join("") || `<tr><td colspan="5" class="muted">No profiles found.</td></tr>`;
-
-      usersBody.querySelectorAll("button[data-save]").forEach(btn => {
-        btn.addEventListener("click", async () => {
-          const id = btn.getAttribute("data-save");
-          const role = usersBody.querySelector(`select[data-role="${id}"]`).value;
-          const orgId = usersBody.querySelector(`select[data-org="${id}"]`).value || null;
-
-          setStatus(usersStatus, "ok", "Saving…");
-          const { error } = await supabase
-            .from("profiles")
-            .update({ role, org_id: orgId })
-            .eq("id", id);
-
-          if (error) {
-            console.error(error);
-            setStatus(usersStatus, "err", "❌ Save failed: " + error.message);
-          } else {
-            setStatus(usersStatus, "ok", "✅ Updated user profile.");
-            await loadUsers();
-          }
-        });
-      });
-
-      usersBody.querySelectorAll("button[data-toggle]").forEach(btn => {
-        btn.addEventListener("click", async () => {
-          const id = btn.getAttribute("data-toggle");
-          const { data: { session } } = await supabase.auth.getSession();
-          if (session?.user?.id === id) {
-            alert("You cannot deactivate your own account from here.");
-            return;
-          }
-
-          const userRow = profilesCache.find(x => x.id === id);
-          if (!userRow) return;
-
-          const nextActive = !userRow.is_active;
-          if (!confirm(`${nextActive ? "Reactivate" : "Deactivate"} this user?`)) return;
-
-          setStatus(usersStatus, "ok", "Saving…");
-
-          const { error } = await supabase
-            .from("profiles")
-            .update({ is_active: nextActive })
-            .eq("id", id);
-
-          if (error) {
-            console.error(error);
-            setStatus(usersStatus, "err", "❌ Update failed: " + error.message);
-          } else {
-            setStatus(usersStatus, "ok", `✅ User ${nextActive ? "reactivated" : "deactivated"}.`);
-            await loadUsers();
-          }
-        });
-      });
-    }
-
-    // ===== Create Ticket Modal =====
-    function openCreateTicketModal(){
-      clearStatus(createTicketStatus);
-      ctRequesterEmail.value = "";
-      ctAssigneeEmail.value = "";
-      ctSubject.value = "";
-      ctDesc.value = "";
-
-      ctOrg.innerHTML =
-        `<option value="">(select org)</option>` +
-        (orgsCache || []).map(o => `<option value="${o.id}">${escapeHtml(o.name)}</option>`).join("");
-
-      show(createTicketOverlay);
-      createTicketOverlay.setAttribute("aria-hidden", "false");
-    }
-    function closeCreateTicketModal(){
-      hide(createTicketOverlay);
-      createTicketOverlay.setAttribute("aria-hidden", "true");
-      clearStatus(createTicketStatus);
-    }
-
-    closeCreateTicketBtn.addEventListener("click", closeCreateTicketModal);
-    createTicketOverlay.addEventListener("click", (e) => {
-      if (e.target === createTicketOverlay) closeCreateTicketModal();
-    });
-    window.addEventListener("keydown", (e) => {
-      if (e.key === "Escape" && !createTicketOverlay.classList.contains("hide")) closeCreateTicketModal();
-    });
-
-    createTicketBtn.addEventListener("click", async () => {
-      await ensureOrgCache();
-      openCreateTicketModal();
-    });
-
-    ctSubmitBtn.addEventListener("click", async () => {
-      clearStatus(createTicketStatus);
-
-      const requesterEmail = (ctRequesterEmail.value || "").trim();
-      const assigneeEmail  = (ctAssigneeEmail.value || "").trim();
-      const orgId          = ctOrg.value || null;
-      const priority       = ctPriority.value;
-      const subject        = (ctSubject.value || "").trim();
-      const description    = (ctDesc.value || "").trim();
-
-      if (!requesterEmail) return setStatus(createTicketStatus, "err", "❌ Requester email is required.");
-      if (!orgId) return setStatus(createTicketStatus, "err", "❌ Select an organization.");
-      if (!subject) return setStatus(createTicketStatus, "err", "❌ Subject is required.");
-      if (!description) return setStatus(createTicketStatus, "err", "❌ Description is required.");
-
-      const { data: { session } } = await supabase.auth.getSession();
-      const user = session?.user;
-      if (!user) return setStatus(createTicketStatus, "err", "❌ Please login first.");
-      if (currentRole !== "admin") return setStatus(createTicketStatus, "err", "❌ Admin access required.");
-
-      try{
-        ctSubmitBtn.disabled = true;
-        setStatus(createTicketStatus, "ok", "Creating ticket…");
-
-        const payload = {
-          created_by: user.id,                // admin creates the ticket
-          requester_email: requesterEmail,    // ticket belongs to requester
-          requester_name: requesterEmail,
-          priority,
-          subject,
-          description,
-          status: "open",
-          org_id: orgId,
-          assignee_email: assigneeEmail || null, // only if column exists
-          created_by_email: user.email || null,   // only if column exists
-        };
-
-        // If your tickets table doesn't have assignee_email/created_by_email columns,
-        // Supabase will error. If that happens, remove those two fields from payload.
-
-        const { data, error } = await supabase
-          .from("tickets")
-          .insert(payload)
-          .select("id")
-          .single();
-
-        if (error) throw error;
-
-        setStatus(createTicketStatus, "ok", `✅ Ticket created! Ticket ID: ${data.id}`);
-        await loadManageTickets();
-        closeCreateTicketModal();
-
-      } catch (err){
-        console.error("admin create ticket error:", err);
-        setStatus(createTicketStatus, "err", "❌ Could not create ticket: " + (err?.message || "Check RLS/table columns."));
-      } finally {
-        ctSubmitBtn.disabled = false;
-      }
-    });
-
-    // ===== UI State + Route Guard =====
+    // ===== UI State =====
     async function setUiForSession(session){
       clearStatus(authStatus);
 
       if (!session?.user) {
         currentUser = null;
-
         hide(portal);
         show(authCard);
         hide(logoutBtn);
         hide(adminLink);
         hide(adminMaintenance);
         hide(manageCard);
-        if (createTicketBtn) hide(createTicketBtn);
+        hide(createTicketBtn);
         closeCommentsModal();
         closeCreateTicketModal();
         return;
@@ -1507,14 +1222,8 @@
       currentUser = session.user;
       await loadProfile(session.user.id);
 
-      if (currentRole === "admin") show(adminLink);
-      else hide(adminLink);
-
-      const wantsAdminView = window.location.hash === "#admin";
-      if (wantsAdminView && currentRole !== "admin") {
-        goToHash("#");
-        setStatus(mineStatus, "err", "❌ Admin access required.");
-      }
+      await loadOrganizationsBestEffort();
+      if (currentRole === "admin") await loadUsersBestEffort(); // needed for requester dropdown
 
       roleBadge.textContent = `Role: ${String(currentRole || "user").toUpperCase()}`;
 
@@ -1522,51 +1231,38 @@
       show(portal);
       show(logoutBtn);
 
-      // Only admins get Create Ticket button (and full manage)
-      if (currentRole === "admin") show(createTicketBtn);
-      else hide(createTicketBtn);
+      // Admin link & create ticket button
+      if (currentRole === "admin") {
+        show(adminLink);
+        show(createTicketBtn);
+      } else {
+        hide(adminLink);
+        hide(createTicketBtn);
+      }
 
+      // Manage panel
       if (currentRole === "manager") {
         show(manageCard);
         manageTitle.textContent = "Team Tickets";
-        manageDesc.textContent = "View and update tickets for your organization (grouped by status).";
+        manageDesc.textContent = "You can view and update tickets for your organization.";
       } else if (currentRole === "admin") {
         show(manageCard);
         manageTitle.textContent = "All Tickets";
-        manageDesc.textContent = "View and update all tickets (grouped by status).";
+        manageDesc.textContent = "View / update all tickets grouped by status (collapse/expand).";
       } else {
         hide(manageCard);
       }
 
-      const wantsAdminView2 = window.location.hash === "#admin";
-      if (currentRole === "admin" && wantsAdminView2) {
-        show(adminMaintenance);
-        activateAdminTab("orgs");
-        await loadOrganizations();
-        await loadUsers();
-      } else {
-        hide(adminMaintenance);
-      }
-
       await loadMyTickets();
-      if (currentRole === "manager" || currentRole === "admin") {
-        await loadManageTickets();
-      }
+      if (currentRole === "manager" || currentRole === "admin") await loadManageTickets();
     }
 
     // Initial session
-    initSectionToggles();
-
     const { data: { session } } = await supabase.auth.getSession();
     await setUiForSession(session);
 
     supabase.auth.onAuthStateChange(async (_event, newSession) => {
       await setUiForSession(newSession);
-    });
-
-    window.addEventListener("hashchange", async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      await setUiForSession(session);
     });
 
     // Login
@@ -1575,10 +1271,7 @@
       const email = emailEl.value.trim();
       const password = passEl.value.trim();
 
-      if (!email || !password) {
-        setStatus(authStatus, "err", "❌ Enter email + password.");
-        return;
-      }
+      if (!email || !password) return setStatus(authStatus, "err", "❌ Enter email + password.");
 
       setStatus(authStatus, "ok", "Logging in…");
       const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -1588,7 +1281,6 @@
     }
 
     loginBtn.addEventListener("click", doLogin);
-    [emailEl, passEl].forEach(el => el.addEventListener("keydown", (e) => { if (e.key === "Enter") doLogin(); }));
 
     // Signup
     signupBtn.addEventListener("click", async () => {
@@ -1614,7 +1306,6 @@
       if (!email) return setStatus(authStatus, "err", "❌ Enter your email first, then click Forgot Password.");
 
       setStatus(authStatus, "ok", "Sending reset email…");
-
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: window.location.origin + "/reset.html"
       });
@@ -1632,7 +1323,7 @@
       await supabase.auth.signOut();
     });
 
-    // Submit ticket
+    // Submit ticket (user submits for themselves)
     ticketForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       clearStatus(submitStatus);
@@ -1657,7 +1348,9 @@
         subject: document.getElementById("subject").value.trim(),
         description: document.getElementById("desc").value.trim(),
         status: "open",
-        org_id: currentOrgId
+        org_id: currentOrgId,
+        hours_worked: 0,
+        is_deleted: false
       };
 
       try {
@@ -1672,9 +1365,7 @@
         ticketForm.reset();
         setStatus(submitStatus, "ok", `✅ Ticket submitted! Ticket ID: ${data.id}`);
         await loadMyTickets();
-        if (currentRole === "manager" || currentRole === "admin") {
-          await loadManageTickets();
-        }
+        if (currentRole === "manager" || currentRole === "admin") await loadManageTickets();
       } catch (err) {
         console.error(err);
         setStatus(submitStatus, "err", "❌ Could not submit ticket: " + (err?.message || "Check RLS."));
@@ -1686,7 +1377,7 @@
     // Refresh buttons
     refreshMineBtn.addEventListener("click", loadMyTickets);
     refreshManageBtn.addEventListener("click", loadManageTickets);
-    refreshUsersBtn.addEventListener("click", loadUsers);
+
   </script>
 </body>
 </html>
