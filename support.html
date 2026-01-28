@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html lang="en">
 <head>
@@ -535,7 +534,7 @@
     // Map org id -> name (for display)
     function orgNameById(id){
       const hit = orgsCache.find(o => o.id === id);
-      return hit ? hit.name : (id ? String(id).slice(0,8) + "…" : "");
+      return hit ? hit.name : "";
     }
 
     // ===== Admin collapse state =====
@@ -929,6 +928,9 @@
         return;
       }
 
+      // ✅ Ensure org names are available before rendering
+      if (!orgsCache || orgsCache.length === 0) await loadOrganizationsBestEffort();
+
       const { data, error } = await supabase
         .from("tickets")
         .select("id, created_at, subject, priority, status, org_id, hours_worked")
@@ -954,7 +956,8 @@
           <td>${escapeHtml(t.priority)}</td>
           <td>${pill(t.status)}</td>
           <td>${escapeHtml((t.hours_worked ?? 0).toString())}</td>
-          <td>${escapeHtml(orgNameById(t.org_id) || t.org_id || "")}</td>
+          <!-- ✅ org name first, fallback to short UUID -->
+          <td>${escapeHtml(orgNameById(t.org_id) || (t.org_id ? String(t.org_id).slice(0,8) + "…" : ""))}</td>
           <td class="mono">${t.id}</td>
           <td>
             <button class="smallBtn" type="button" data-comments="${t.id}" data-subject="${escapeHtml(t.subject)}">Comments</button>
@@ -1026,7 +1029,8 @@
                       <td>${escapeHtml(t.requester_email || "")}</td>
                       <td>${escapeHtml(t.subject)}</td>
                       <td>${escapeHtml(t.priority)}</td>
-                      <td>${escapeHtml(orgNameById(t.org_id) || t.org_id || "")}</td>
+                      <!-- ✅ org name first, fallback to short UUID -->
+                      <td>${escapeHtml(orgNameById(t.org_id) || (t.org_id ? String(t.org_id).slice(0,8) + "…" : ""))}</td>
 
                       <td>
                         <select data-id="${t.id}" data-field="status">
@@ -1179,6 +1183,9 @@
 
       if (!(currentRole === "manager" || currentRole === "admin")) return;
 
+      // ✅ Ensure org names are available before rendering
+      if (!orgsCache || orgsCache.length === 0) await loadOrganizationsBestEffort();
+
       // Manager: org tickets, Admin: all tickets
       let q = supabase
         .from("tickets")
@@ -1222,10 +1229,17 @@
       currentUser = session.user;
       await loadProfile(session.user.id);
 
+      // ✅ load org cache so we can display org NAMES (badge + tables)
       await loadOrganizationsBestEffort();
+
       if (currentRole === "admin") await loadUsersBestEffort(); // needed for requester dropdown
 
-      roleBadge.textContent = `Role: ${String(currentRole || "user").toUpperCase()}`;
+      // ✅ role badge now shows Org NAME (fallback short UUID if name not found)
+      const orgLabel =
+        orgNameById(currentOrgId) ||
+        (currentOrgId ? String(currentOrgId).slice(0,8) + "…" : "(none)");
+
+      roleBadge.textContent = `Role: ${String(currentRole || "user").toUpperCase()} • Org: ${orgLabel}`;
 
       hide(authCard);
       show(portal);
