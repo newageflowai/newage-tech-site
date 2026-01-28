@@ -534,7 +534,13 @@
     // Map org id -> name (for display)
     function orgNameById(id){
       const hit = orgsCache.find(o => o.id === id);
-      return hit ? hit.name : "";
+      return hit ? hit.name : (id ? String(id).slice(0,8) + "…" : "");
+    }
+
+    // ===== NEW: make sure org cache is loaded before rendering org names =====
+    async function ensureOrgCache(){
+      if (Array.isArray(orgsCache) && orgsCache.length > 0) return;
+      await loadOrganizationsBestEffort();
     }
 
     // ===== Admin collapse state =====
@@ -749,7 +755,7 @@
 
       const { data: { session } } = await supabase.auth.getSession();
       const user = session?.user;
-      if (!user) return setStatus(commentsStatus, "err", "❌ Please login first.");
+      if (!user) return setStatus(commentsStatus, "err") , setStatus(commentsStatus, "err", "❌ Please login first.");
 
       try {
         addCommentBtn.disabled = true;
@@ -928,8 +934,8 @@
         return;
       }
 
-      // ✅ Ensure org names are available before rendering
-      if (!orgsCache || orgsCache.length === 0) await loadOrganizationsBestEffort();
+      // NEW: ensure org cache is loaded so orgNameById can resolve to names
+      await ensureOrgCache();
 
       const { data, error } = await supabase
         .from("tickets")
@@ -956,8 +962,7 @@
           <td>${escapeHtml(t.priority)}</td>
           <td>${pill(t.status)}</td>
           <td>${escapeHtml((t.hours_worked ?? 0).toString())}</td>
-          <!-- ✅ org name first, fallback to short UUID -->
-          <td>${escapeHtml(orgNameById(t.org_id) || (t.org_id ? String(t.org_id).slice(0,8) + "…" : ""))}</td>
+          <td>${escapeHtml(orgNameById(t.org_id) || t.org_id || "")}</td>
           <td class="mono">${t.id}</td>
           <td>
             <button class="smallBtn" type="button" data-comments="${t.id}" data-subject="${escapeHtml(t.subject)}">Comments</button>
@@ -1029,8 +1034,7 @@
                       <td>${escapeHtml(t.requester_email || "")}</td>
                       <td>${escapeHtml(t.subject)}</td>
                       <td>${escapeHtml(t.priority)}</td>
-                      <!-- ✅ org name first, fallback to short UUID -->
-                      <td>${escapeHtml(orgNameById(t.org_id) || (t.org_id ? String(t.org_id).slice(0,8) + "…" : ""))}</td>
+                      <td>${escapeHtml(orgNameById(t.org_id) || t.org_id || "")}</td>
 
                       <td>
                         <select data-id="${t.id}" data-field="status">
@@ -1183,8 +1187,8 @@
 
       if (!(currentRole === "manager" || currentRole === "admin")) return;
 
-      // ✅ Ensure org names are available before rendering
-      if (!orgsCache || orgsCache.length === 0) await loadOrganizationsBestEffort();
+      // NEW: ensure org cache is loaded so orgNameById can resolve to names
+      await ensureOrgCache();
 
       // Manager: org tickets, Admin: all tickets
       let q = supabase
@@ -1229,16 +1233,13 @@
       currentUser = session.user;
       await loadProfile(session.user.id);
 
-      // ✅ load org cache so we can display org NAMES (badge + tables)
-      await loadOrganizationsBestEffort();
+      // IMPORTANT: load orgs before setting role badge (so we can show org name)
+      await ensureOrgCache();
 
       if (currentRole === "admin") await loadUsersBestEffort(); // needed for requester dropdown
 
-      // ✅ role badge now shows Org NAME (fallback short UUID if name not found)
-      const orgLabel =
-        orgNameById(currentOrgId) ||
-        (currentOrgId ? String(currentOrgId).slice(0,8) + "…" : "(none)");
-
+      // NEW: show role + org NAME (and keep a safe fallback)
+      const orgLabel = orgNameById(currentOrgId) || (currentOrgId ? String(currentOrgId).slice(0,8) + "…" : "(none)");
       roleBadge.textContent = `Role: ${String(currentRole || "user").toUpperCase()} • Org: ${orgLabel}`;
 
       hide(authCard);
