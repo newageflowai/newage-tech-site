@@ -542,11 +542,13 @@
     // Storage bucket name
     const ATTACH_BUCKET = "ticket-attachments";
 
-    // Map org id -> name (for display)
+    // Map org id -> name (for display)  ✅ FIXED (string-safe compare)
     function orgNameById(id){
-      const hit = orgsCache.find(o => o.id === id);
-      return hit ? hit.name : (id ? String(id).slice(0,8) + "…" : "");
+    if (id == null) return "";
+    const hit = (orgsCache || []).find(o => String(o.id) === String(id));
+    return hit ? hit.name : "";
     }
+
 
     // ===== Admin collapse state =====
     const sectionCollapsed = { open:false, working:false, complete:false };
