@@ -1236,7 +1236,10 @@
       await loadOrganizationsBestEffort();
       if (currentRole === "admin") await loadUsersBestEffort(); // needed for requester dropdown
 
-      roleBadge.textContent = `Role: ${String(currentRole || "user").toUpperCase()}`;
+      const orgName = orgNameById(currentOrgId);
+      roleBadge.textContent =
+      `Role: ${String(currentRole || "user").toUpperCase()}` +
+      (orgName ? ` • Org: ${orgName}` : "");
 
       hide(authCard);
       show(portal);
