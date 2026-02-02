@@ -138,27 +138,21 @@
         <div class="muted">Login to submit tickets and view status. Managers/Admins can manage tickets.</div>
       </div>
       <div class="actions">
-  <a class="btn secondary" href="/">← Back to site</a>
+        <a class="btn secondary" href="/">← Back to site</a>
 
-  <!-- AnyDesk download -->
-  <a
-    class="btn secondary"
-    href="/AnyDesk.exe"
-    download
-    title="Download AnyDesk Remote Support"
-  >
-    ⬇ AnyDesk
-  </a>
+        <!-- AnyDesk download (ONLY after login) -->
+        <a
+          id="anydeskBtn"
+          class="btn secondary hide"
+          href="/AnyDesk.exe"
+          download
+          title="Download AnyDesk Remote Support"
+        >⬇ AnyDesk</a>
 
-  <button id="logoutBtn" class="btn secondary hide" type="button">
-    Logout
-  </button>
-
-  <a id="adminLink" class="btn secondary hide" href="#admin">
-    Admin Maintenance
-  </a>
-</div>
-
+        <button id="logoutBtn" class="btn secondary hide" type="button">Logout</button>
+        <a id="adminLink" class="btn secondary hide" href="#admin">Admin Maintenance</a>
+      </div>
+    </div>
 
     <!-- AUTH -->
     <div id="authCard" class="card">
@@ -447,6 +441,7 @@
     const authCard = document.getElementById("authCard");
     const portal = document.getElementById("portal");
     const logoutBtn = document.getElementById("logoutBtn");
+    const anydeskBtn = document.getElementById("anydeskBtn"); // NEW
 
     const authStatus = document.getElementById("authStatus");
     const submitStatus = document.getElementById("submitStatus");
@@ -547,18 +542,10 @@
     // Storage bucket name
     const ATTACH_BUCKET = "ticket-attachments";
 
-    // Map org id -> name (for display)  ✅ FIXED (string-safe compare)
+    // Map org id -> name (for display)
     function orgNameById(id){
-    if (id == null) return "";
-    const hit = (orgsCache || []).find(o => String(o.id) === String(id));
-    return hit ? hit.name : "";
-    }
-
-
-    // ===== NEW: make sure org cache is loaded before rendering org names =====
-    async function ensureOrgCache(){
-      if (Array.isArray(orgsCache) && orgsCache.length > 0) return;
-      await loadOrganizationsBestEffort();
+      const hit = orgsCache.find(o => o.id === id);
+      return hit ? hit.name : (id ? String(id).slice(0,8) + "…" : "");
     }
 
     // ===== Admin collapse state =====
@@ -773,7 +760,7 @@
 
       const { data: { session } } = await supabase.auth.getSession();
       const user = session?.user;
-      if (!user) return setStatus(commentsStatus, "err") , setStatus(commentsStatus, "err", "❌ Please login first.");
+      if (!user) return setStatus(commentsStatus, "err", "❌ Please login first.");
 
       try {
         addCommentBtn.disabled = true;
@@ -951,9 +938,6 @@
         mineBody.innerHTML = `<tr><td colspan="8" class="muted">No session.</td></tr>`;
         return;
       }
-
-      // NEW: ensure org cache is loaded so orgNameById can resolve to names
-      await ensureOrgCache();
 
       const { data, error } = await supabase
         .from("tickets")
@@ -1205,9 +1189,6 @@
 
       if (!(currentRole === "manager" || currentRole === "admin")) return;
 
-      // NEW: ensure org cache is loaded so orgNameById can resolve to names
-      await ensureOrgCache();
-
       // Manager: org tickets, Admin: all tickets
       let q = supabase
         .from("tickets")
@@ -1239,6 +1220,7 @@
         hide(portal);
         show(authCard);
         hide(logoutBtn);
+        hide(anydeskBtn); // NEW: hide on login screen
         hide(adminLink);
         hide(adminMaintenance);
         hide(manageCard);
@@ -1251,22 +1233,15 @@
       currentUser = session.user;
       await loadProfile(session.user.id);
 
-      // IMPORTANT: load orgs before setting role badge (so we can show org name)
-      await ensureOrgCache();
-
+      await loadOrganizationsBestEffort();
       if (currentRole === "admin") await loadUsersBestEffort(); // needed for requester dropdown
 
-      // NEW: show role + org NAME (and keep a safe fallback)
-      const orgLabel = orgNameById(currentOrgId) || (currentOrgId ? String(currentOrgId).slice(0,8) + "…" : "(none)");
-      const orgName = orgNameById(currentOrgId);
-      roleBadge.textContent =
-      `Role: ${String(currentRole || "user").toUpperCase()}` +
-      (orgName ? ` • Org: ${orgName}` : "");
-      roleBadge.textContent = `Role: ${String(currentRole || "user").toUpperCase()} • Org: ${orgLabel}`;
+      roleBadge.textContent = `Role: ${String(currentRole || "user").toUpperCase()}`;
 
       hide(authCard);
       show(portal);
       show(logoutBtn);
+      show(anydeskBtn); // NEW: show after login
 
       // Admin link & create ticket button
       if (currentRole === "admin") {
