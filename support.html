@@ -1177,7 +1177,7 @@
       mineBody.innerHTML = "";
 
       if (!currentUser?.email) {
-        mineBody.innerHTML = `<tr><td colspan="8" class="muted">No session.</td></tr>`;
+        mineBody.innerHTML = `<tr><td colspan="7" class="muted">No session.</td></tr>`;
         return;
       }
 
@@ -1195,7 +1195,7 @@
       }
 
       if (!data || data.length === 0) {
-        mineBody.innerHTML = `<tr><td colspan="8" class="muted">No tickets yet.</td></tr>`;
+        mineBody.innerHTML = `<tr><td colspan="7" class="muted">No tickets yet.</td></tr>`;
         return;
       }
 
@@ -1206,7 +1206,6 @@
           <td>${escapeHtml(t.priority)}</td>
           <td>${pill(t.status)}</td>
           <td>${escapeHtml((t.hours_worked ?? 0).toString())}</td>
-          <td>${escapeHtml(orgNameById(t.org_id) || t.org_id || "")}</td>
           <td>
             <button class="smallBtn" type="button" data-comments="${t.id}" data-subject="${escapeHtml(t.subject)}">Comments</button>
           </td>
@@ -1260,7 +1259,6 @@
                   <th>Requester</th>
                   <th>Subject</th>
                   <th>Priority</th>
-                  <th>Org</th>
                   <th>Status</th>
                   ${showHoursEdit ? `<th>Hours</th><th>Save</th>` : `<th>Hours</th>`}
                   <th>Comments</th>
@@ -1617,7 +1615,7 @@
 
         ticketForm.reset();
         setStatus(submitStatus, "ok", `✅ Ticket submitted! Ticket ID: ${data.id}`);
-        await loadMyTickets();
+        await colspan;
         if (currentRole === "manager" || currentRole === "admin") await loadManageTickets();
       } catch (err) {
         console.error(err);
