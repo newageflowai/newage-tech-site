@@ -583,4 +583,89 @@
           .from("profiles")
           .select("role, org_id")
           .eq("id", userId)
-         
+          .single();
+      }
+
+      const { data, error } = res;
+      if (error) { console.error("loadProfile error:", error); return; }
+
+      if (Object.prototype.hasOwnProperty.call(data, "is_active") && data.is_active === false) {
+        alert("Your account has been deactivated. Please contact support.");
+        await supabase.auth.signOut();
+        currentRole = "user";
+        currentOrgId = null;
+        return;
+      }
+
+      currentRole = data?.role || "user";
+      currentOrgId = data?.org_id || null;
+    }
+
+    // ===== ADMIN: Render Orgs (NO ORG ID COLUMN) =====
+    function renderOrgsTable(){
+      if (!orgsBody) return;
+      if (!orgsCache?.length){
+        orgsBody.innerHTML = `<tr><td colspan="2" class="muted">No organizations found.</td></tr>`;
+        return;
+      }
+
+      orgsBody.innerHTML = orgsCache.map(o => `
+        <tr>
+          <td>${escapeHtml(o.name)}</td>
+          <td>
+            <button class="smallBtn" type="button" data-org-del="${escapeHtml(o.id)}">Delete</button>
+          </td>
+        </tr>
+      `).join("");
+
+      orgsBody.querySelectorAll("button[data-org-del]").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const id = btn.getAttribute("data-org-del");
+          if (!confirm("Delete this organization? This may fail if users/tickets are linked.")) return;
+
+          setStatus(orgStatus, "ok", "Deleting…");
+          const { error } = await supabase.from("organizations").delete().eq("id", id);
+          if (error) {
+            console.error(error);
+            setStatus(orgStatus, "err", "❌ Delete failed: " + error.message);
+          } else {
+            setStatus(orgStatus, "ok", "✅ Deleted.");
+            await refreshAdminOrgs();
+            await refreshAdminUsers();
+          }
+        });
+      });
+    }
+
+    // ===== ADMIN: Render Users (NO UUID SHOWN) =====
+    function renderUsersTable(){
+      if (!usersBody) return;
+
+      if (!profilesCache?.length){
+        usersBody.innerHTML = `<tr><td colspan="5" class="muted">No users found.</td></tr>`;
+        return;
+      }
+
+      const orgOptions =
+        `<option value="">(none)</option>` +
+        (orgsCache || []).map(o => `<option value="${escapeHtml(o.id)}">${escapeHtml(o.name)}</option>`).join("");
+
+      usersBody.innerHTML = profilesCache.map(p => `
+        <tr>
+          <td>${escapeHtml(p.email || "")}</td>
+          <td>
+            <select data-u-role="${escapeHtml(p.id)}">
+              <option value="user" ${p.role==="user"?"selected":""}>user</option>
+              <option value="manager" ${p.role==="manager"?"selected":""}>manager</option>
+              <option value="admin" ${p.role==="admin"?"selected":""}>admin</option>
+            </select>
+          </td>
+          <td>
+            <select data-u-org="${escapeHtml(p.id)}">
+              ${orgOptions}
+            </select>
+          </td>
+          <td>
+            <select data-u-active="${escapeHtml(p.id)}">
+              <option value="true" ${(p.is_active !== false) ? "selected":""}>true</option>
+              <option value="false" ${(p.is_active === false) ? "selected":
