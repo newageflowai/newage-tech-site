@@ -140,7 +140,6 @@
       <div class="actions">
         <a class="btn secondary" href="/">← Back to site</a>
 
-        <!-- AnyDesk download (ONLY after login) -->
         <a
           id="anydeskBtn"
           class="btn secondary hide"
@@ -150,8 +149,6 @@
         >⬇ AnyDesk</a>
 
         <button id="logoutBtn" class="btn secondary hide" type="button">Logout</button>
-
-        <!-- ✅ FIX: real hash -->
         <a id="adminLink" class="btn secondary hide" href="#adminMaintenance">Admin Maintenance</a>
       </div>
     </div>
@@ -306,7 +303,6 @@
                   <thead>
                     <tr>
                       <th>Name</th>
-                      <th>Org ID</th>
                       <th>Actions</th>
                     </tr>
                   </thead>
@@ -321,7 +317,7 @@
         <div id="panelUsers" class="hide">
           <div class="actions" style="justify-content:space-between;align-items:flex-end">
             <div class="muted">
-              Users show as UUIDs from <b>profiles</b>. Users must sign up on this page first.
+              Users must sign up on this page first.
             </div>
             <button id="refreshUsersBtn" class="btn secondary" type="button">Refresh</button>
           </div>
@@ -331,7 +327,6 @@
             <table>
               <thead>
                 <tr>
-                  <th>User UUID</th>
                   <th>Email</th>
                   <th>Role</th>
                   <th>Organization</th>
@@ -476,7 +471,6 @@
     const panelOrgs = document.getElementById("panelOrgs");
     const panelUsers = document.getElementById("panelUsers");
 
-    // ✅ NEW: orgs + users UI refs
     const orgsBody = document.getElementById("orgsBody");
     const usersBody = document.getElementById("usersBody");
     const newOrgName = document.getElementById("newOrgName");
@@ -517,7 +511,7 @@
     function hide(el){ el.classList.add("hide"); }
 
     function setStatus(el, type, msg){
-      el.className = "status " + type; // ok | err
+      el.className = "status " + type;
       el.textContent = msg;
     }
     function clearStatus(el){
@@ -539,7 +533,7 @@
 
     // State
     let currentUser = null;
-    let currentRole = "user";  // user | manager | admin
+    let currentRole = "user";
     let currentOrgId = null;
 
     // Cache
@@ -552,25 +546,41 @@
     // Storage bucket name
     const ATTACH_BUCKET = "ticket-attachments";
 
-    // Map org id -> name (for display)
+    // Map org id -> name (used for dropdown labels only; never shown on tickets UI)
     function orgNameById(id){
       if (id == null) return "";
       const hit = (orgsCache || []).find(o => String(o.id) === String(id));
       return hit ? hit.name : "";
     }
 
-    // ✅ NEW: Render orgs table
+    // ===== Admin tabs =====
+    function setAdminTab(which){
+      if (which === "orgs") {
+        tabOrgs.classList.add("active");
+        tabUsers.classList.remove("active");
+        show(panelOrgs);
+        hide(panelUsers);
+      } else {
+        tabUsers.classList.add("active");
+        tabOrgs.classList.remove("active");
+        show(panelUsers);
+        hide(panelOrgs);
+      }
+    }
+    tabOrgs.addEventListener("click", () => setAdminTab("orgs"));
+    tabUsers.addEventListener("click", () => setAdminTab("users"));
+
+    // ===== Admin: render orgs (NO Org ID shown) =====
     function renderOrgsTable(){
       if (!orgsBody) return;
       if (!orgsCache?.length) {
-        orgsBody.innerHTML = `<tr><td colspan="3" class="muted">No organizations found.</td></tr>`;
+        orgsBody.innerHTML = `<tr><td colspan="2" class="muted">No organizations found.</td></tr>`;
         return;
       }
 
       orgsBody.innerHTML = orgsCache.map(o => `
         <tr>
           <td>${escapeHtml(o.name)}</td>
-          <td class="mono">${escapeHtml(o.id)}</td>
           <td>
             <button class="smallBtn" type="button" data-org-del="${escapeHtml(o.id)}">Delete</button>
           </td>
@@ -590,27 +600,26 @@
           } else {
             setStatus(orgStatus, "ok", "✅ Deleted.");
             await refreshAdminOrgs();
-            await refreshAdminUsers(); // org dropdown depends on this
+            await refreshAdminUsers();
           }
         });
       });
     }
 
-    // ✅ NEW: Render users table
+    // ===== Admin: render users (NO UUID column shown) =====
     function renderUsersTable(){
       if (!usersBody) return;
 
       if (!profilesCache?.length) {
-        usersBody.innerHTML = `<tr><td colspan="6" class="muted">No users found.</td></tr>`;
+        usersBody.innerHTML = `<tr><td colspan="5" class="muted">No users found.</td></tr>`;
         return;
       }
 
-      const orgOptions = `<option value="">(none)</option>` + (orgsCache || [])
-        .map(o => `<option value="${escapeHtml(o.id)}">${escapeHtml(o.name)}</option>`)
-        .join("");
+      const orgOptions =
+        `<option value="">(none)</option>` +
+        (orgsCache || []).map(o => `<option value="${escapeHtml(o.id)}">${escapeHtml(o.name)}</option>`).join("");
 
       usersBody.innerHTML = profilesCache.map(p => {
-        const orgLabel = orgNameById(p.org_id) || (p.org_id ? String(p.org_id) : "");
         return `
           <tr>
             <td>${escapeHtml(p.email || "")}</td>
@@ -625,7 +634,6 @@
               <select data-u-org="${escapeHtml(p.id)}">
                 ${orgOptions}
               </select>
-              <div class="muted" style="margin-top:6px">Current: ${escapeHtml(orgLabel)}</div>
             </td>
             <td>
               <select data-u-active="${escapeHtml(p.id)}">
@@ -659,7 +667,6 @@
 
           setStatus(usersStatus, "ok", "Saving…");
 
-          // try update including is_active, fallback if column doesn't exist
           let { error } = await supabase
             .from("profiles")
             .update({ role, org_id, is_active })
@@ -684,7 +691,6 @@
       });
     }
 
-    // ✅ NEW: Load orgs + show errors instead of silent empty
     async function refreshAdminOrgs(){
       if (currentRole !== "admin") return;
       setStatus(orgStatus, "ok", "Loading organizations…");
@@ -707,7 +713,6 @@
       setStatus(orgStatus, "ok", `✅ Loaded ${orgsCache.length} organization(s).`);
     }
 
-    // ✅ NEW: Load users + show errors instead of silent empty
     async function refreshAdminUsers(){
       if (currentRole !== "admin") return;
       setStatus(usersStatus, "ok", "Loading users…");
@@ -730,7 +735,6 @@
       setStatus(usersStatus, "ok", `✅ Loaded ${profilesCache.length} user(s).`);
     }
 
-    // ✅ NEW: Create org
     createOrgBtn.addEventListener("click", async () => {
       if (currentRole !== "admin") return;
       clearStatus(orgStatus);
@@ -754,23 +758,6 @@
     refreshOrgsBtn.addEventListener("click", refreshAdminOrgs);
     refreshUsersBtn.addEventListener("click", refreshAdminUsers);
 
-    // ✅ Admin Maintenance nav shows section + loads data
-    function setAdminTab(which){
-      if (which === "orgs") {
-        tabOrgs.classList.add("active");
-        tabUsers.classList.remove("active");
-        show(panelOrgs);
-        hide(panelUsers);
-      } else {
-        tabUsers.classList.add("active");
-        tabOrgs.classList.remove("active");
-        show(panelUsers);
-        hide(panelOrgs);
-      }
-    }
-    tabOrgs.addEventListener("click", () => setAdminTab("orgs"));
-    tabUsers.addEventListener("click", () => setAdminTab("users"));
-
     async function openAdminMaintenance(){
       if (currentRole !== "admin") return;
 
@@ -779,7 +766,6 @@
       history.replaceState(null, "", "#adminMaintenance");
       adminMaintenance.scrollIntoView({ behavior: "smooth", block: "start" });
 
-      // load both so switching tabs is instant
       await refreshAdminOrgs();
       await refreshAdminUsers();
     }
@@ -837,7 +823,7 @@
     // ===== COMMENTS =====
     function openCommentsModal(ticketId, subject){
       activeTicketId = ticketId;
-      commentsTicketLine.textContent = `Ticket: ${ticketId}${subject ? " • " + subject : ""}`;
+      commentsTicketLine.textContent = `Ticket Comments${subject ? " • " + subject : ""}`;
       newCommentText.value = "";
       if (commentFiles) commentFiles.value = "";
       clearStatus(commentsStatus);
@@ -1136,7 +1122,7 @@
 
         if (error) throw error;
 
-        setStatus(createTicketStatus, "ok", `✅ Ticket created: ${data.id}`);
+        setStatus(createTicketStatus, "ok", `✅ Ticket created.`);
         await loadMyTickets();
         await loadManageTickets();
         setTimeout(() => closeCreateTicketModal(), 650);
@@ -1149,7 +1135,7 @@
       }
     });
 
-    // ===== Data loaders (tickets use these) =====
+    // ===== Data loaders =====
     async function loadOrganizationsBestEffort(){
       const { data, error } = await supabase
         .from("organizations")
@@ -1176,7 +1162,7 @@
       mineBody.innerHTML = "";
 
       if (!currentUser?.email) {
-        mineBody.innerHTML = `<tr><td colspan="7" class="muted">No session.</td></tr>`;
+        mineBody.innerHTML = `<tr><td colspan="6" class="muted">No session.</td></tr>`;
         return;
       }
 
@@ -1194,7 +1180,7 @@
       }
 
       if (!data || data.length === 0) {
-        mineBody.innerHTML = `<tr><td colspan="7" class="muted">No tickets yet.</td></tr>`;
+        mineBody.innerHTML = `<tr><td colspan="6" class="muted">No tickets yet.</td></tr>`;
         return;
       }
 
@@ -1301,8 +1287,6 @@
                       ` : `
                         <td>${escapeHtml(String(hoursVal))}</td>
                       `}
-
-                  
 
                       <td>
                         <button class="smallBtn" type="button" data-comments="${t.id}" data-subject="${escapeHtml(t.subject)}">Comments</button>
@@ -1467,10 +1451,8 @@
       await loadOrganizationsBestEffort();
       if (currentRole === "admin") await loadUsersBestEffort();
 
-      const orgName = orgNameById(currentOrgId);
-      roleBadge.textContent =
-        `Role: ${String(currentRole || "user").toUpperCase()}` +
-        (orgName ? ` • Org: ${orgName}` : "");
+      // ✅ HIDE ORG FROM BADGE
+      roleBadge.textContent = `Role: ${String(currentRole || "user").toUpperCase()}`;
 
       hide(authCard);
       show(portal);
@@ -1500,7 +1482,6 @@
       await loadMyTickets();
       if (currentRole === "manager" || currentRole === "admin") await loadManageTickets();
 
-      // ✅ If you opened /support.html#adminMaintenance, auto-load admin data
       if (currentRole === "admin" && window.location.hash === "#adminMaintenance") {
         await openAdminMaintenance();
       }
@@ -1612,8 +1593,8 @@
         if (error) throw error;
 
         ticketForm.reset();
-        setStatus(submitStatus, "ok", `✅ Ticket submitted! Ticket ID: ${data.id}`);
-        await colspan;
+        setStatus(submitStatus, "ok", `✅ Ticket submitted!`);
+        await loadMyTickets();
         if (currentRole === "manager" || currentRole === "admin") await loadManageTickets();
       } catch (err) {
         console.error(err);
