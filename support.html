@@ -150,7 +150,9 @@
         >⬇ AnyDesk</a>
 
         <button id="logoutBtn" class="btn secondary hide" type="button">Logout</button>
-        <a id="adminLink" class="btn secondary hide" href="#admin">Admin Maintenance</a>
+
+        <!-- ✅ FIX: point directly to the real section id -->
+        <a id="adminLink" class="btn secondary hide" href="#adminMaintenance">Admin Maintenance</a>
       </div>
     </div>
 
@@ -469,7 +471,7 @@
     const manageTitle = document.getElementById("manageTitle");
     const manageDesc = document.getElementById("manageDesc");
 
-    // Admin maintenance elements (UI exists; admin maintenance actions can be added later)
+    // Admin maintenance elements
     const adminMaintenance = document.getElementById("adminMaintenance");
     const adminLink = document.getElementById("adminLink");
     const tabOrgs = document.getElementById("tabOrgs");
@@ -527,6 +529,46 @@
       return `<span class="pill ${s}">${s.charAt(0).toUpperCase() + s.slice(1)}</span>`;
     }
 
+    // ✅ FIX: Admin Maintenance nav actually shows the section + scrolls
+    function openAdminMaintenance(){
+      if (currentRole !== "admin") return;
+
+      // show the admin maintenance section
+      show(adminMaintenance);
+
+      // default to Orgs tab
+      tabOrgs.classList.add("active");
+      tabUsers.classList.remove("active");
+      show(panelOrgs);
+      hide(panelUsers);
+
+      // update hash + scroll
+      history.replaceState(null, "", "#adminMaintenance");
+      adminMaintenance.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    // ✅ FIX: tabs switch panels (previously no handlers)
+    function setAdminTab(which){
+      if (which === "orgs") {
+        tabOrgs.classList.add("active");
+        tabUsers.classList.remove("active");
+        show(panelOrgs);
+        hide(panelUsers);
+      } else {
+        tabUsers.classList.add("active");
+        tabOrgs.classList.remove("active");
+        show(panelUsers);
+        hide(panelOrgs);
+      }
+    }
+    tabOrgs.addEventListener("click", () => setAdminTab("orgs"));
+    tabUsers.addEventListener("click", () => setAdminTab("users"));
+
+    adminLink.addEventListener("click", (e) => {
+      e.preventDefault();
+      openAdminMaintenance();
+    });
+
     // State
     let currentUser = null;
     let currentRole = "user";  // user | manager | admin
@@ -542,14 +584,12 @@
     // Storage bucket name
     const ATTACH_BUCKET = "ticket-attachments";
 
-   // Map org id -> name (for display)  ✅ FIXED (string-safe compare)
-   function orgNameById(id){
-   if (id == null) return "";
-   const hit = (orgsCache || []).find(o => String(o.id) === String(id));
-   return hit ? hit.name : "";
-   }
-
-
+    // Map org id -> name (for display)  ✅ FIXED (string-safe compare)
+    function orgNameById(id){
+      if (id == null) return "";
+      const hit = (orgsCache || []).find(o => String(o.id) === String(id));
+      return hit ? hit.name : "";
+    }
 
     // ===== Admin collapse state =====
     const sectionCollapsed = { open:false, working:false, complete:false };
@@ -1098,7 +1138,6 @@
         document.getElementById(`secBtn_${k}`)?.addEventListener("click", () => toggleSection(k));
       });
 
-      // Comments buttons
       manageSections.querySelectorAll("button[data-comments]").forEach(btn => {
         btn.addEventListener("click", () => {
           const id = btn.getAttribute("data-comments");
@@ -1107,7 +1146,6 @@
         });
       });
 
-      // Status change (immediate)
       manageSections.querySelectorAll('select[data-field="status"][data-id]').forEach(sel => {
         sel.addEventListener("change", async () => {
           const id = sel.getAttribute("data-id");
@@ -1128,7 +1166,6 @@
         });
       });
 
-      // Save hours + status (admin)
       if (currentRole === "admin") {
         manageSections.querySelectorAll('button[data-save]').forEach(btn => {
           btn.addEventListener("click", async () => {
@@ -1156,12 +1193,11 @@
             } else {
               setStatus(manageStatus, "ok", "✅ Saved.");
               await loadManageTickets();
-              await loadMyTickets(); // so requester sees updated hours quickly
+              await loadMyTickets();
             }
           });
         });
 
-        // Soft delete
         manageSections.querySelectorAll('button[data-delete]').forEach(btn => {
           btn.addEventListener("click", async () => {
             const id = btn.getAttribute("data-delete");
@@ -1192,7 +1228,6 @@
 
       if (!(currentRole === "manager" || currentRole === "admin")) return;
 
-      // Manager: org tickets, Admin: all tickets
       let q = supabase
         .from("tickets")
         .select("id, created_at, requester_email, subject, priority, status, org_id, hours_worked, is_deleted")
@@ -1223,7 +1258,7 @@
         hide(portal);
         show(authCard);
         hide(logoutBtn);
-        hide(anydeskBtn); // NEW: hide on login screen
+        hide(anydeskBtn);
         hide(adminLink);
         hide(adminMaintenance);
         hide(manageCard);
@@ -1237,19 +1272,18 @@
       await loadProfile(session.user.id);
 
       await loadOrganizationsBestEffort();
-      if (currentRole === "admin") await loadUsersBestEffort(); // needed for requester dropdown
+      if (currentRole === "admin") await loadUsersBestEffort();
 
       const orgName = orgNameById(currentOrgId);
       roleBadge.textContent =
-      `Role: ${String(currentRole || "user").toUpperCase()}` +
-      (orgName ? ` • Org: ${orgName}` : "");
+        `Role: ${String(currentRole || "user").toUpperCase()}` +
+        (orgName ? ` • Org: ${orgName}` : "");
 
       hide(authCard);
       show(portal);
       show(logoutBtn);
-      show(anydeskBtn); // NEW: show after login
+      show(anydeskBtn);
 
-      // Admin link & create ticket button
       if (currentRole === "admin") {
         show(adminLink);
         show(createTicketBtn);
@@ -1258,7 +1292,6 @@
         hide(createTicketBtn);
       }
 
-      // Manage panel
       if (currentRole === "manager") {
         show(manageCard);
         manageTitle.textContent = "Team Tickets";
@@ -1273,6 +1306,11 @@
 
       await loadMyTickets();
       if (currentRole === "manager" || currentRole === "admin") await loadManageTickets();
+
+      // ✅ FIX: if user opened /support.html#adminMaintenance, show the section
+      if (currentRole === "admin" && window.location.hash === "#adminMaintenance") {
+        openAdminMaintenance();
+      }
     }
 
     // Initial session
