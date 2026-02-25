@@ -614,7 +614,6 @@
         const orgLabel = orgNameById(p.org_id) || (p.org_id ? String(p.org_id) : "");
         return `
           <tr>
-            <td class="mono">${escapeHtml(p.id)}</td>
             <td>${escapeHtml(p.email || "")}</td>
             <td>
               <select data-u-role="${escapeHtml(p.id)}">
@@ -1264,7 +1263,6 @@
                   <th>Org</th>
                   <th>Status</th>
                   ${showHoursEdit ? `<th>Hours</th><th>Save</th>` : `<th>Hours</th>`}
-                  <th>Ticket ID</th>
                   <th>Comments</th>
                   ${showDelete ? `<th>Delete</th>` : ``}
                 </tr>
