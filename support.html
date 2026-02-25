@@ -243,7 +243,6 @@
                   <th>Status</th>
                   <th>Hours</th>
                   <th>Org</th>
-                  <th>Ticket ID</th>
                   <th>Comments</th>
                 </tr>
               </thead>
@@ -1209,7 +1208,6 @@
           <td>${pill(t.status)}</td>
           <td>${escapeHtml((t.hours_worked ?? 0).toString())}</td>
           <td>${escapeHtml(orgNameById(t.org_id) || t.org_id || "")}</td>
-          <td class="mono">${t.id}</td>
           <td>
             <button class="smallBtn" type="button" data-comments="${t.id}" data-subject="${escapeHtml(t.subject)}">Comments</button>
           </td>
@@ -1310,7 +1308,7 @@
                         <td>${escapeHtml(String(hoursVal))}</td>
                       `}
 
-                      <td class="mono">${t.id}</td>
+                  
 
                       <td>
                         <button class="smallBtn" type="button" data-comments="${t.id}" data-subject="${escapeHtml(t.subject)}">Comments</button>
